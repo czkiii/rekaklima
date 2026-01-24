@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 interface Product {
@@ -24,7 +25,7 @@ const Shop: React.FC = () => {
       title: "Álomnapló",
       category: "Digitális Termék",
       price: "3 490 Ft",
-      image: "https://images.unsplash.com/photo-1531346878377-a5be20888e57?q=80&w=500",
+      image: "/assets/shop/alomnaplo_hun.jpg",
       description: "Interaktív útmutató az álmok elemzéséhez. A vásárlás után e-mailben küldjük a hozzáférést."
     },
     {
@@ -32,16 +33,8 @@ const Shop: React.FC = () => {
       title: "Esküvői tervező",
       category: "Digitális Csomag",
       price: "4 890 Ft",
-      image: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=500",
+      image: "/assets/shop/eskuvoi_tervezo_01.jpg",
       description: "Teljes körű digitális szervezőfüzet. Biztonságos e-mail kézbesítéssel a fizetést követően."
-    },
-    {
-      id: 3,
-      title: "Minimál Határidőnapló",
-      category: "2024 Digitális",
-      price: "2 990 Ft",
-      image: "https://images.unsplash.com/photo-1506784919141-9358404bb05a?q=80&w=500",
-      description: "Letisztult digitális tervező. Nincs közvetlen letöltés, a fájlt személyre szabva küldjük."
     }
   ];
 
@@ -78,7 +71,7 @@ const Shop: React.FC = () => {
           <div className="w-16 h-1.5 bg-[#C87941]/20 mx-auto mt-10 rounded-full"></div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-32">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 max-w-4xl mx-auto gap-12 mb-32">
           {products.map((product, idx) => (
             <div 
               key={product.id} 
@@ -113,39 +106,8 @@ const Shop: React.FC = () => {
             </div>
           ))}
         </div>
-
-        {/* FAQ Section with cleaner aesthetic */}
-        <div className="max-w-4xl mx-auto glass rounded-[60px] p-10 md:p-16 border border-white/50 shadow-sm reveal">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-8 mb-12">
-            <div className="w-16 h-16 bg-[#C87941]/10 rounded-[25px] flex items-center justify-center text-[#C87941]">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-                <h3 className="serif text-3xl md:text-4xl text-[#4A403A] mb-2">Hogyan kapom meg?</h3>
-                <p className="text-[#8C827D] font-medium tracking-wide text-sm uppercase">Pár egyszerű lépés az alkotásig</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div className="space-y-4">
-              <h4 className="text-xs uppercase tracking-widest font-bold text-[#C87941]">Azonnali elérés</h4>
-              <p className="text-sm text-[#7A7A7A] leading-relaxed">
-                A sikeres fizetést követően percek alatt megérkezik hozzád a visszaigazoló e-mail, benne a letölthető fájlokkal.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-xs uppercase tracking-widest font-bold text-[#C87941]">Biztonságos fájlok</h4>
-              <p className="text-sm text-[#7A7A7A] leading-relaxed">
-                Minden digitális termékünk kiváló minőségű, PDF formátumban érkezik, így bármilyen eszközön könnyen megnyitható.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* MODAL */}
       {selectedProduct && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#4A403A]/60 backdrop-blur-xl transition-opacity animate-in fade-in" onClick={closeModal}></div>
