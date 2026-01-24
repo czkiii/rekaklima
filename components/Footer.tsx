@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
       
       <div className="flex flex-col gap-4 text-sm text-[#5A5A5A] font-medium mb-20">
         <p className="hover:text-[#C87941] transition-colors">+36 20 593 3928</p>
-        <p className="hover:text-[#C87941] transition-colors underline underline-offset-4 decoration-[#F5E1D2]">rekaklima@gmail.com</p>
+        <p className="hover:text-[#C87941] transition-colors underline underline-offset-4 decoration-[#F5E1D2]">info@rekaklima.com</p>
       </div>
 
       <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-16">
@@ -25,7 +25,7 @@ const Footer: React.FC = () => {
           © 2026 Opoczki-Klima Ádám EV – Minden jog fenntartva
         </p>
         <p className="text-[9px] text-gray-300 mt-2 uppercase tracking-widest">
-            Handcrafted with soul by Klima Réka
+            Handcrafted with soul by Opoczki-Klima Réka
         </p>
       </div>
 

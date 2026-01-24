@@ -43,17 +43,17 @@ const Hero: React.FC = () => {
 
         <div className="relative w-full md:w-1/2 flex justify-center md:justify-end order-1 md:order-2">
           <div className="relative">
-            <div className="animate-float">
-              <div className="w-[200px] sm:w-[280px] md:w-[450px] aspect-[4/5] overflow-hidden shadow-[0_30px_60px_-15px_rgba(200,121,65,0.2)] bg-white relative z-20">
+            <div className="animate-float rounded-full">
+              <div className="w-[200px] sm:w-[280px] md:w-[450px] aspect-[4/5] shadow-[0_30px_60px_-15px_rgba(200,121,65,0.2)] bg-white relative z-20 rounded-full">
                 <img 
                   src={rekaHero} 
                   alt="Réka portré" 
-                  className="w-full h-full object-cover grayscale-[15%] hover:grayscale-0 transition-all duration-1000"
+                  className="w-full h-full object-cover grayscale-[15%] hover:grayscale-0 transition-all duration-1000 rounded-full"
                 />
                 <img 
                   src="/assets/portrait/frame.svg" 
                   alt="frame" 
-                  className="absolute inset-0 w-full h-auto top-1/2 transform -translate-y-1/2 pointer-events-none scale-120"
+                  className="absolute inset-0 w-full h-full object-contain top-[44%] transform -translate-y-1/2 pointer-events-none scale-125"
                 />
               </div>
             </div>
