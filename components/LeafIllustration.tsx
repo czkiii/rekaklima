@@ -8,27 +8,37 @@ interface Props {
 const LeafIllustration: React.FC<Props> = ({ className = "" }) => {
   return (
     <svg 
-      viewBox="0 0 100 100" 
+      viewBox="0 0 120 120" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg" 
       className={className}
     >
-      <path 
-        d="M50 90C50 90 40 70 40 50C40 30 50 10 50 10C50 10 60 30 60 50C60 70 50 90 50 90Z" 
-        fill="currentColor" 
-        fillOpacity="0.8"
-      />
-      <path 
-        d="M40 70C25 70 15 55 15 40C15 25 25 10 40 10C40 10 30 25 30 40C30 55 40 70 40 70Z" 
-        fill="currentColor" 
-        fillOpacity="0.5"
-      />
-      <path 
-        d="M60 70C75 70 85 55 85 40C85 25 75 10 60 10C60 10 70 25 70 40C70 55 60 70 60 70Z" 
-        fill="currentColor" 
-        fillOpacity="0.5"
-      />
-      <circle cx="50" cy="50" r="2" fill="currentColor" />
+      {/* Hand-drawn style leaf branch based on the provided reference image */}
+      <g fill="currentColor">
+        {/* Main Stem */}
+        <path d="M10 100 C 40 90, 80 80, 110 70" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+        
+        {/* Top Leaf */}
+        <path d="M105 68 C 115 65, 125 75, 110 85 C 100 85, 95 75, 105 68 Z" />
+        
+        {/* Right Middle Leaf */}
+        <path d="M85 75 C 95 72, 105 82, 90 92 C 80 92, 75 82, 85 75 Z" />
+        
+        {/* Right Bottom Leaf */}
+        <path d="M65 82 C 75 79, 85 89, 70 99 C 60 99, 55 89, 65 82 Z" />
+        
+        {/* Left Top Leaf */}
+        <path d="M90 65 C 85 50, 100 45, 105 60 C 105 70, 95 75, 90 65 Z" />
+        
+        {/* Left Middle Leaf */}
+        <path d="M65 72 C 60 57, 75 52, 80 67 C 80 77, 70 82, 65 72 Z" />
+        
+        {/* Left Bottom Leaf */}
+        <path d="M40 80 C 35 65, 50 60, 55 75 C 55 85, 45 90, 40 80 Z" />
+        
+        {/* Far Bottom Leaf */}
+        <path d="M15 92 C 10 77, 25 72, 30 87 C 30 97, 20 102, 15 92 Z" />
+      </g>
     </svg>
   );
 };

@@ -3,6 +3,8 @@ import React from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import About from './components/About';
+import Portfolio from './components/Portfolio';
+import Shop from './components/Shop';
 import Pricing from './components/Pricing';
 import Footer from './components/Footer';
 
@@ -13,6 +15,8 @@ const App: React.FC = () => {
       <main>
         <Hero />
         <About />
+        <Portfolio />
+        <Shop />
         <Pricing />
       </main>
       <Footer />

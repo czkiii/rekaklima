@@ -4,53 +4,50 @@ import LeafIllustration from './LeafIllustration';
 
 const About: React.FC = () => {
   return (
-    <section id="rolam" className="py-16 px-6 relative">
-      <div className="flex flex-col gap-10">
-        <div className="flex items-start gap-5">
-          {/* Portrait Image (based on provided Image 1 - drawing) */}
-          <div className="w-[45%] flex-shrink-0">
-            <div className="aspect-[4/5] rounded-[50px] overflow-hidden shadow-md border-2 border-white/50">
-              <img 
-                src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=600" 
-                alt="Réka alkotás közben" 
-                className="w-full h-full object-cover"
-              />
-            </div>
+    <section id="rolam" className="py-16 md:py-32 px-6 relative overflow-hidden bg-white/10">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10 md:gap-24">
+        
+        {/* SZÖVEG - Bal oldalon */}
+        <div className="flex flex-col gap-4 md:gap-8 text-left order-2 md:order-1 flex-grow">
+          <h2 className="text-5xl md:text-9xl script text-[#4A403A] font-normal leading-tight">Rólam</h2>
+          
+          <div className="text-sm md:text-3xl leading-snug text-[#5A5A5A] italic serif max-w-2xl">
+            <p>
+              "A design lényege számomra a történetmesélés és a lélekkel teli alkotás."
+            </p>
           </div>
           
-          <div className="flex flex-col gap-2 flex-1 pt-4">
-            <h2 className="text-5xl script text-[#4A403A] font-normal mb-2">Rólam</h2>
-            <div className="text-[13px] leading-relaxed text-[#5A5A5A] space-y-3 font-medium">
-              <p>
-                Grafikus vagyok, aki hisz abban, hogy a jó design nem csak szép, hanem érthető, szerethető és működik.
-              </p>
-              <p>
-                Legyen szó vállalkozásokról, éttermekről, arculatról vagy egy teljesen személyes projektről.
-              </p>
-            </div>
+          <div className="text-xs md:text-lg leading-relaxed text-[#7A7A7A] space-y-3 md:space-y-6 font-normal max-w-lg">
+            <p>
+              Grafikus vagyok, aki rajong az organikus formákért és a természetes textúrákért. Legyen szó egy márka születéséről vagy egy esküvő vizuális világáról, minden projektbe beleadom a szívem-lelkem.
+            </p>
+            <p className="hidden md:block">
+              Munkáim során arra törekszem, hogy az esztétika és a funkcionalitás tökéletes egyensúlyba kerüljön, így teremtve maradandó értéket számodra.
+            </p>
+          </div>
+          
+          <div className="pt-4 md:pt-10 flex items-center gap-4">
+             <div className="w-10 md:w-20 h-[1.5px] bg-[#C87941]"></div>
+             <span className="text-[10px] md:text-sm uppercase tracking-[0.4em] text-[#C87941] font-bold">Klima Réka</span>
           </div>
         </div>
 
-        {/* Mini Portfolio Preview Grid */}
-        <div className="grid grid-cols-3 gap-3 mt-4">
-          {[
-            { img: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=400", label: "Esküvői grafika" },
-            { img: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=400", label: "Egyedi portré" },
-            { img: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&q=80&w=400", label: "Éttermi design" }
-          ].map((item, idx) => (
-            <div key={idx} className="flex flex-col items-center gap-2">
-              <div className="w-full aspect-square rounded-2xl overflow-hidden shadow-sm border border-[#F5E1D2]">
-                <img src={item.img} alt={item.label} className="w-full h-full object-cover grayscale-[10%]" />
-              </div>
-              <span className="text-[9px] text-center font-bold text-[#4A403A] uppercase tracking-tighter">{item.label}</span>
-            </div>
-          ))}
+        {/* OVÁLIS KÉP - Jobb oldalon */}
+        <div className="shrink-0 relative order-1 md:order-2">
+          <div className="w-[150px] sm:w-[200px] md:w-[350px] aspect-[2/3] rounded-full overflow-hidden shadow-2xl border-[6px] md:border-[15px] border-white ring-1 ring-[#F5E1D2]/30 bg-white">
+            <img 
+              src="./reka_about.jpg" 
+              alt="Réka alkotás közben" 
+              onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=600"; }}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          
+          {/* Dekoratív levél - Mint a kézműves stílusban */}
+          <div className="absolute -bottom-10 -right-10 opacity-20 hidden md:block scale-150 transform rotate-12">
+             <LeafIllustration className="w-48 h-48 text-[#8BA888]" />
+          </div>
         </div>
-      </div>
-      
-      {/* Botanical detail */}
-      <div className="absolute bottom-0 right-4 opacity-10">
-        <LeafIllustration className="w-20 h-20 text-[#8BA888]" />
       </div>
     </section>
   );
