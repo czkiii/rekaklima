@@ -44,24 +44,24 @@ const ScrollingLeaf: React.FC = () => {
           right: `calc(3% + ${rightMoveX}px)`,
           transform: `translateY(${scrollY * 0.25}px) rotate(${rightRotate}deg)`,
           transition: 'transform 0.1s ease-out',
-          opacity: 0.2
+          opacity: 0.35
         }}
       >
-        <img src="/assets/leaf2.svg" alt="leaf" className="w-10 h-10 md:w-20 md:h-20" style={{ color: '#D97706' }} />
+        <img src="/assets/leaf2.svg" alt="leaf" className="w-10 h-10 md:w-20 md:h-20" style={{ color: '#C87941' }} />
       </div>
 
       {/* Egy harmadik, nagyon halvány levél, ami mélyebbről indul */}
       <div 
-        className="fixed pointer-events-none z-[90] hidden md:block"
+        className="fixed pointer-events-none z-[90]"
         style={{
           top: '60%',
           right: `calc(15% + ${Math.sin(scrollY / 400) * 60}px)`,
           transform: `translateY(${scrollY * 0.05}px) rotate(${scrollY / 20}deg)`,
           transition: 'transform 0.2s ease-out',
-          opacity: 0.1
+          opacity: 0.15
         }}
       >
-        <img src="/assets/leaf3.svg" alt="leaf" className="w-16 h-16" style={{ color: '#8BA888' }} />
+        <img src="/assets/leaf3.svg" alt="leaf" className="w-12 h-12 md:w-16 md:h-16" style={{ color: '#8BA888' }} />
       </div>
     </>
   );

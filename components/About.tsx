@@ -40,7 +40,7 @@ const About: React.FC = () => {
             />
           </div>
           
-          <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-20 transform rotate-12 hidden md:block">
+          <div className="absolute -bottom-8 -right-8 md:-bottom-16 md:-right-16 w-32 h-32 md:w-64 md:h-64 opacity-20 transform rotate-12">
             <img src="/assets/decoration.svg" alt="decoration" className="w-full h-full" style={{ color: '#8BA888' }} />
           </div>
         </div>

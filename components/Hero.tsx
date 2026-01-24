@@ -63,7 +63,7 @@ const Hero: React.FC = () => {
       </div>
 
       <div className="w-full z-20 mt-12">
-        <WaveDivider fill="#F5E1D2" className="h-[40px] md:h-[120px]" />
+        <WaveDivider fill="#F5E1D2" className="h-[40px] md:h-[120px]" stretch={true} />
       </div>
     </section>
   );

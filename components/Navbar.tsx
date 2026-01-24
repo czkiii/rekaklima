@@ -17,7 +17,7 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         
         <a href="#" className="flex items-center gap-2 group transition-transform hover:scale-105 duration-300">
-          <Logo className="h-24 md:h-56 w-auto transition-all duration-500" />
+          <Logo className="h-[138px] md:h-56 w-auto transition-all duration-500" />
         </a>
 
         <div className="hidden md:flex items-center gap-8 lg:gap-12">
