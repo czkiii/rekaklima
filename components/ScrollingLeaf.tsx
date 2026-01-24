@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from 'react';
-import LeafIllustration from './LeafIllustration';
 
 const ScrollingLeaf: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -34,7 +33,7 @@ const ScrollingLeaf: React.FC = () => {
           opacity: 0.25
         }}
       >
-        <LeafIllustration className="w-12 h-12 md:w-24 md:h-24 text-[#6B8369]" />
+        <img src="/assets/leaf1.svg" alt="leaf" className="w-12 h-12 md:w-24 md:h-24" style={{ color: '#6B8369' }} />
       </div>
 
       {/* Jobb oldali levél */}
@@ -48,7 +47,7 @@ const ScrollingLeaf: React.FC = () => {
           opacity: 0.2
         }}
       >
-        <LeafIllustration className="w-10 h-10 md:w-20 md:h-20 text-[#D97706]" />
+        <img src="/assets/leaf2.svg" alt="leaf" className="w-10 h-10 md:w-20 md:h-20" style={{ color: '#D97706' }} />
       </div>
 
       {/* Egy harmadik, nagyon halvány levél, ami mélyebbről indul */}
@@ -62,7 +61,7 @@ const ScrollingLeaf: React.FC = () => {
           opacity: 0.1
         }}
       >
-        <LeafIllustration className="w-16 h-16 text-[#8BA888]" />
+        <img src="/assets/leaf3.svg" alt="leaf" className="w-16 h-16" style={{ color: '#8BA888' }} />
       </div>
     </>
   );

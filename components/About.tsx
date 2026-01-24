@@ -40,10 +40,8 @@ const About: React.FC = () => {
             />
           </div>
           
-          <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-20 transform rotate-12 hidden md:block text-[#8BA888]">
-            <svg viewBox="0 0 100 100" fill="currentColor">
-               <path d="M30 100C30 70 0 60 0 30C30 0 70 0 100 30C100 60 70 70 70 100C50 90 40 90 30 100Z" />
-            </svg>
+          <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-20 transform rotate-12 hidden md:block">
+            <img src="/assets/decoration.svg" alt="decoration" className="w-full h-full" style={{ color: '#8BA888' }} />
           </div>
         </div>
       </div>
