@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 
 interface Product {
   id: number;
@@ -8,17 +8,10 @@ interface Product {
   category: string;
   image: string;
   description: string;
+  stripeLink: string;
 }
 
-type ModalStep = 'details' | 'payment' | 'success';
-
 const Shop: React.FC = () => {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [step, setStep] = useState<ModalStep>('details');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [email, setEmail] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'transfer' | 'revolut'>('card');
-
   const products: Product[] = [
     {
       id: 1,
@@ -26,7 +19,8 @@ const Shop: React.FC = () => {
       category: "Digitális Termék",
       price: "3 490 Ft",
       image: "/assets/shop/alomnaplo_hun.jpg",
-      description: "Interaktív útmutató az álmok elemzéséhez. A vásárlás után e-mailben küldjük a hozzáférést."
+      description: "Interaktív útmutató az álmok elemzéséhez.",
+      stripeLink: "https://buy.stripe.com/dRm7sK4Pa3nQ6Isg6BfIs00"
     },
     {
       id: 2,
@@ -34,30 +28,17 @@ const Shop: React.FC = () => {
       category: "Digitális Csomag",
       price: "4 890 Ft",
       image: "/assets/shop/eskuvoi_tervezo_01.jpg",
-      description: "Teljes körű digitális szervezőfüzet. Biztonságos e-mail kézbesítéssel a fizetést követően."
+      description: "Teljes körű digitális szervezőfüzet.",
+      stripeLink: ""
     }
   ];
 
-  const handleOrderInit = () => {
-    if (!email || !email.includes('@')) {
-      alert('Kérlek adj meg egy érvényes e-mail címet!');
+  const handleCheckout = (product: Product) => {
+    if (!product.stripeLink) {
+      alert('Ez a termék még nem elérhető a vásárláshoz.');
       return;
     }
-    setStep('payment');
-  };
-
-  const handleFinalSubmit = () => {
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setStep('success');
-    }, 2000);
-  };
-
-  const closeModal = () => {
-    setSelectedProduct(null);
-    setStep('details');
-    setEmail('');
+    window.open(product.stripeLink, '_blank');
   };
 
   return (
@@ -98,101 +79,18 @@ const Shop: React.FC = () => {
               </div>
 
               <button 
-                onClick={() => setSelectedProduct(product)}
+                onClick={() => handleCheckout(product)}
                 className="w-full py-5 rounded-[25px] bg-[#4A403A] text-white font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-[#C87941] active:scale-95 shadow-lg shadow-gray-200"
               >
-                Kosárba teszem
+                Megvásárlás
               </button>
             </div>
           ))}
         </div>
       </div>
-
-      {selectedProduct && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[#4A403A]/60 backdrop-blur-xl transition-opacity animate-in fade-in" onClick={closeModal}></div>
-          <div className="bg-[#F9F5F1] w-full max-w-lg rounded-[50px] shadow-2xl z-10 overflow-hidden relative border border-white animate-in zoom-in slide-in-from-bottom-10 duration-500">
-            <button onClick={closeModal} className="absolute top-8 right-8 text-[#4A403A] hover:text-[#C87941] transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            
-            <div className="p-10 md:p-14">
-              {step === 'details' && (
-                <div className="space-y-8">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-widest text-[#8C827D] font-bold mb-1 block">{selectedProduct.category}</span>
-                    <h2 className="serif text-4xl text-[#4A403A]">{selectedProduct.title}</h2>
-                  </div>
-                  <div className="space-y-4">
-                    <p className="text-sm text-[#7A7A7A] leading-relaxed">{selectedProduct.description}</p>
-                    <input 
-                        type="email" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="E-mail címed a kézbesítéshez" 
-                        className="w-full bg-white border border-[#F5E1D2] py-5 px-8 rounded-3xl text-sm focus:outline-none focus:border-[#C87941] shadow-inner transition-all"
-                    />
-                  </div>
-                  <button onClick={handleOrderInit} className="w-full bg-[#4A403A] text-white py-6 rounded-[25px] text-sm font-bold uppercase tracking-[0.2em] shadow-xl hover:bg-[#C87941] transition-all active:scale-95">
-                    Tovább a fizetéshez
-                  </button>
-                </div>
-              )}
-
-              {step === 'payment' && (
-                <div className="space-y-8">
-                  <h2 className="serif text-3xl text-[#4A403A]">Fizetési mód</h2>
-                  <div className="space-y-4">
-                    <button 
-                      onClick={() => setPaymentMethod('card')}
-                      className={`w-full p-6 rounded-[30px] border-2 flex items-center justify-between transition-all duration-300 ${paymentMethod === 'card' ? 'border-[#C87941] bg-white shadow-xl' : 'border-transparent bg-white/40 opacity-60'}`}
-                    >
-                      <span className="font-bold text-[#4A403A] text-sm uppercase tracking-widest">Kártya / Pay</span>
-                      <div className="flex gap-2">
-                        <div className="px-3 py-1 bg-black rounded-lg flex items-center"><span className="text-[8px] text-white font-bold"> Pay</span></div>
-                        <div className="px-3 py-1 bg-[#4285F4] rounded-lg flex items-center"><span className="text-[8px] text-white font-bold">G Pay</span></div>
-                      </div>
-                    </button>
-                    <button 
-                      onClick={() => setPaymentMethod('transfer')}
-                      className={`w-full p-6 rounded-[30px] border-2 flex items-center gap-4 transition-all duration-300 ${paymentMethod === 'transfer' ? 'border-[#C87941] bg-white shadow-xl' : 'border-transparent bg-white/40 opacity-60'}`}
-                    >
-                      <span className="font-bold text-[#4A403A] text-sm uppercase tracking-widest">Banki átutalás</span>
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <button onClick={() => setStep('details')} className="text-xs font-bold uppercase text-[#7A7A7A] hover:text-[#4A403A]">Vissza</button>
-                    <button onClick={handleFinalSubmit} disabled={isSubmitting} className="flex-grow bg-[#D97706] text-white py-6 rounded-[25px] text-sm font-bold uppercase tracking-[0.2em] shadow-xl hover:bg-[#B45309] transition-all">
-                      {isSubmitting ? 'Kapcsolódás...' : `Fizetés: ${selectedProduct.price}`}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {step === 'success' && (
-                <div className="text-center py-10 animate-in zoom-in duration-700">
-                  <div className="w-24 h-24 bg-[#8BA888]/20 rounded-full flex items-center justify-center mx-auto mb-8">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-[#6B8369]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h2 className="serif text-4xl text-[#4A403A] mb-4">Sikeres rendelés!</h2>
-                  <p className="text-sm text-[#7A7A7A] leading-relaxed mb-10 max-w-xs mx-auto">
-                    A fájlt elküldtük a <span className="font-bold text-[#C87941]">{email}</span> címre. Nézd meg a promóciók fülön is!
-                  </p>
-                  <button onClick={closeModal} className="bg-[#4A403A] text-white px-12 py-5 rounded-full text-xs font-bold uppercase tracking-widest shadow-lg">
-                    Vissza a főoldalra
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 };
 
 export default Shop;
+

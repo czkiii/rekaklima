@@ -27,7 +27,7 @@ const Clients: React.FC = () => {
           {clients.map((client, idx) => (
             <div 
               key={idx} 
-              className="reveal active h-12 md:h-16 w-full flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:opacity-100 group"
+              className="reveal active h-[112px] md:h-[150px] w-full flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500 hover:opacity-100 group"
               style={{ transitionDelay: `${idx * 50}ms` }}
             >
               <img 
