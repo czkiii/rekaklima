@@ -7,10 +7,12 @@ import Portfolio from './components/Portfolio';
 import Shop from './components/Shop';
 import Pricing from './components/Pricing';
 import Footer from './components/Footer';
+import ScrollingLeaf from './components/ScrollingLeaf';
 
 const App: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#FDF9F6] text-[#2D2D2D] overflow-x-hidden">
+    <div className="min-h-screen bg-[#FDF9F6] text-[#2D2D2D] overflow-x-hidden relative">
+      <ScrollingLeaf />
       <Navbar />
       <main>
         <Hero />
