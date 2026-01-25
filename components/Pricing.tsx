@@ -6,6 +6,7 @@ import WaveDivider from './WaveDivider';
 const Pricing: React.FC = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const prices = [
     { title: "Logótervezés", price: "45 000 Ft-tól", desc: "Egyedi logó ami illusztrálja a márkádat", icon: "🎨" },
@@ -15,21 +16,40 @@ const Pricing: React.FC = () => {
     { title: "Egyedi portré", price: "20 000 Ft-tól", desc: "Fotóból készült egyedi illusztráció", icon: "✏️" }
   ];
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name || !formData.email || !formData.message) {
       alert('Kérlek töltsd ki az összes mezőt!');
       return;
     }
 
-    const mailtoLink = `mailto:info@rekaklima.com?subject=Üzenet: ${encodeURIComponent(formData.name)}&body=Név: ${encodeURIComponent(formData.name)}%0AEmail: ${encodeURIComponent(formData.email)}%0A%0AÜzenet:%0A${encodeURIComponent(formData.message)}`;
-    
-    window.location.href = mailtoLink;
-    
-    setSubmitted(true);
-    setTimeout(() => {
-      setFormData({ name: '', email: '', message: '' });
-      setSubmitted(false);
-    }, 3000);
+    setSending(true);
+
+    try {
+      const response = await fetch('https://szofi-fox.czki-adam.workers.dev/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          chatHistory: [
+            { type: 'user', text: formData.message }
+          ]
+        })
+      });
+
+      if (!response.ok) throw new Error('Hiba az email küldésekor');
+
+      setSubmitted(true);
+      setTimeout(() => {
+        setFormData({ name: '', email: '', message: '' });
+        setSubmitted(false);
+      }, 4000);
+    } catch (error) {
+      console.error('Contact form error:', error);
+      alert('❌ Hiba történt az üzenet küldésekor. Kérlek próbáld újra később!');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -62,13 +82,13 @@ const Pricing: React.FC = () => {
             <h3 className="text-xl serif font-bold text-center mb-6 text-[#4A403A]">Üzenj nekem!</h3>
             {submitted ? (
               <div className="text-center py-8">
-                <div className="w-16 h-16 bg-[#8BA888]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-[#8BA888]/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[#6B8369]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-sm text-[#6B8369] font-bold">Az email program megnyílt!</p>
-                <p className="text-xs text-gray-400 mt-2">Küld el az üzeneted!</p>
+                <p className="text-sm text-[#6B8369] font-bold">✅ Üzeneted elküldve!</p>
+                <p className="text-xs text-gray-500 mt-2">Hamarosan jelentkezem! 💌</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -77,26 +97,30 @@ const Pricing: React.FC = () => {
                   placeholder="Név" 
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-transparent border-b border-[#F5E1D2] py-2 px-1 text-sm focus:outline-none focus:border-[#C87941] transition-colors placeholder:text-gray-300" 
+                  disabled={sending}
+                  className="w-full bg-transparent border-b border-[#F5E1D2] py-2 px-1 text-sm focus:outline-none focus:border-[#C87941] transition-colors placeholder:text-gray-300 disabled:opacity-50" 
                 />
                 <input 
                   type="email" 
                   placeholder="Email" 
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-transparent border-b border-[#F5E1D2] py-2 px-1 text-sm focus:outline-none focus:border-[#C87941] transition-colors placeholder:text-gray-300" 
+                  disabled={sending}
+                  className="w-full bg-transparent border-b border-[#F5E1D2] py-2 px-1 text-sm focus:outline-none focus:border-[#C87941] transition-colors placeholder:text-gray-300 disabled:opacity-50" 
                 />
                 <textarea 
                   placeholder="Üzenet" 
                   rows={2}
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full bg-transparent border-b border-[#F5E1D2] py-2 px-1 text-sm focus:outline-none focus:border-[#C87941] transition-colors placeholder:text-gray-300 resize-none" 
+                  disabled={sending}
+                  className="w-full bg-transparent border-b border-[#F5E1D2] py-2 px-1 text-sm focus:outline-none focus:border-[#C87941] transition-colors placeholder:text-gray-300 resize-none disabled:opacity-50" 
                 ></textarea>
                 <button 
                   onClick={handleSubmit}
-                  className="w-full bg-[#D97706] text-white py-3.5 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-lg hover:bg-[#B45309] transition-all active:scale-95 mt-4">
-                  Küldés
+                  disabled={sending}
+                  className="w-full bg-[#D97706] text-white py-3.5 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-lg hover:bg-[#B45309] transition-all active:scale-95 mt-4 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {sending ? '⏳ Küldés...' : '📧 Küldés'}
                 </button>
               </div>
             )}

@@ -17,8 +17,6 @@ const SzofiChat: React.FC = () => {
   const [senderName, setSenderName] = useState('');
   const [senderEmail, setSenderEmail] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
-  const [fallbackMode, setFallbackMode] = useState(false);
-  const [fallbackText, setFallbackText] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const triggerShake = () => {
@@ -81,68 +79,61 @@ const SzofiChat: React.FC = () => {
       return;
     }
 
-    // Chat history szöveggé alakítása
-    const chatText = chatLog
-      .map(msg => {
-        if (msg.type === 'user') {
-          return `Ügyfél: ${msg.text}`;
-        } else {
-          return `Szofi: ${msg.text}`;
-        }
-      })
-      .join('\n');
-
-    const subject = `Új érdeklődés a weboldalról – ${senderName.trim()}`;
-    const body = [
-      'Szia Réka!',
-      '',
-      `Név: ${senderName.trim()}`,
-      `Email: ${senderEmail.trim()}`,
-      '',
-      'Chat történet:',
-      '--------------------',
-      chatText,
-      '--------------------',
-      '',
-      '(Üzenet a látogató levelezőjéből küldve 🦊)'
-    ].join('\n');
-
-    const mailtoLink = `mailto:info@rekaklima.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setSendingEmail(true);
 
     try {
-      // Próbáljuk meg a mailto-t megnyitni
-      window.location.href = mailtoLink;
-      
-      // Kis delay után fallback mód (másolás vágólapra)
-      setTimeout(() => {
-        setFallbackText(body);
-        setFallbackMode(true);
-      }, 500);
+      const response = await fetch('https://szofi-fox.czki-adam.workers.dev/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: senderName.trim(),
+          email: senderEmail.trim(),
+          chatHistory: chatLog,
+        }),
+      });
 
-      // Chat törlése sikeresség után
-      setTimeout(() => {
-        setChatLog([]);
-        setShowSendForm(false);
-        setSenderName('');
-        setSenderEmail('');
-      }, 1000);
+      if (!response.ok) {
+        throw new Error('Hiba az email küldésekor');
+      }
+
+      // Sikeres küldés
+      alert('✅ Üzeneted sikeresen elküldve! Réka hamarosan válaszol. 🦊');
+      
+      // Reset
+      setChatLog([]);
+      setShowSendForm(false);
+      setSenderName('');
+      setSenderEmail('');
+      setIsOpen(false);
     } catch (error) {
-      // Fallback: másolás vágólapra
-      setFallbackText(body);
-      setFallbackMode(true);
+      console.error('Email send error:', error);
+      alert('❌ Hiba történt az üzenet küldésekor. Kérlek próbáld újra, vagy írj nekünk: info@rekaklima.com');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
   const handleCopyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(fallbackText);
+      const chatText = chatLog
+        .map(msg => {
+          if (msg.type === 'user') {
+            return `Ügyfél: ${msg.text}`;
+          } else {
+            return `Szofi: ${msg.text}`;
+          }
+        })
+        .join('\n');
+      
+      await navigator.clipboard.writeText(chatText);
       alert('✅ A beszélgetést kimásoltam! Illeszd be az emailedbe és küldd el Rékának: info@rekaklima.com');
       
       setChatLog([]);
       setShowSendForm(false);
       setSenderName('');
       setSenderEmail('');
-      setFallbackMode(false);
     } catch (error) {
       alert('Hiba a másoláskor. Próbáld újra!');
     }
@@ -176,36 +167,6 @@ const SzofiChat: React.FC = () => {
       `}</style>
 
       <div className="fixed bottom-6 right-6 z-50">
-        {/* Fallback Modal */}
-        {fallbackMode && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-xl shadow-2xl p-4 md:p-6 w-80 md:w-96 max-w-full max-h-[80vh] overflow-y-auto">
-              <h3 className="text-base md:text-lg font-semibold text-[#4A403A] mb-3 md:mb-4">📧 Email kliens nem nyílt meg?</h3>
-              <p className="text-xs md:text-sm text-[#5A5A5A] mb-4 md:mb-6">
-                Nincs gond! Másolhatod a szöveget a vágólapra, és manuálisan beillesztheted az emailbe.
-              </p>
-              <div className="bg-[#F5E1D2]/30 rounded-lg p-2 md:p-3 max-h-[180px] md:max-h-[200px] overflow-y-auto mb-4 md:mb-6">
-                <p className="text-[11px] md:text-xs text-[#4A403A] whitespace-pre-wrap font-mono break-words">
-                  {fallbackText}
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setFallbackMode(false)}
-                  className="flex-1 px-3 py-2 bg-[#E0D5CC] text-[#4A403A] rounded-lg font-medium hover:bg-[#D0CBBC] transition-colors text-sm"
-                >
-                  Mégsem
-                </button>
-                <button
-                  onClick={handleCopyToClipboard}
-                  className="flex-1 px-3 py-2 bg-[#C87941] text-white rounded-lg font-medium hover:bg-[#B86A2E] transition-colors text-sm"
-                >
-                  📋 Másolás
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
         {/* Chat ablak */}
         {isOpen && (
           <div
@@ -290,7 +251,7 @@ const SzofiChat: React.FC = () => {
                         // Adjunk hozzá egy lezárós üzenetet
                         setChatLog(prev => [...prev, {
                           type: 'szofi',
-                          text: 'Na ez már igazi rókacsemege 🦊🍂! Nyomd meg a „Küldj Rékának" gombot – a beszélgetés bemásolódik az e-mailbe!'
+                          text: 'Na ez már igazi rókacsemege 🦊🍂! Nyomd meg a „Küldj Rékának" gombot – elküldöm neki az információkat és hamarosan jelentkezik!'
                         }]);
                         setShowSendForm(true);
                       }}

@@ -5,7 +5,7 @@ const About: React.FC = () => {
   const rekaAbout = "/assets/portrait/reka_about.jpg";
 
   return (
-    <section id="rolam" className="py-24 md:py-48 px-6 relative overflow-hidden bg-white/10">
+    <section id="rolam" className="py-12 md:py-48 px-6 relative overflow-hidden bg-white/10">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 md:gap-32">
         
         <div className="flex flex-col gap-6 md:gap-10 text-left reveal flex-grow">

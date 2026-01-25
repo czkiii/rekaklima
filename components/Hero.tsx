@@ -28,7 +28,7 @@ const Hero: React.FC = () => {
           </h1>
           
           <p className="text-[#5A5A5A] text-sm md:text-xl leading-relaxed font-medium max-w-md">
-            Lélekkel teli vizuális történetek, organikus formák és maradandó arculatok tervezése.
+            Több mint 15 éve tervezek vizuális megoldásokat, ahol az esztétika, a funkció és a történet egységet alkot.
           </p>
 
           <div className="pt-6">
