@@ -9,6 +9,7 @@ import Pricing from './components/Pricing.tsx';
 import Clients from './components/Clients.tsx';
 import Footer from './components/Footer.tsx';
 import ScrollingLeaf from './components/ScrollingLeaf.tsx';
+import SzofiChat from './components/SzofiChat.tsx';
 
 const App: React.FC = () => {
   return (
@@ -24,6 +25,7 @@ const App: React.FC = () => {
         <Clients />
       </main>
       <Footer />
+      <SzofiChat />
     </div>
   );
 };
