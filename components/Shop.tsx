@@ -20,7 +20,7 @@ const Shop: React.FC = () => {
       price: "3 490 Ft",
       image: "/assets/shop/alomnaplo_hun.jpg",
       description: "Interaktív útmutató az álmok elemzéséhez.",
-      stripeLink: "https://buy.stripe.com/dRm7sK4Pa3nQ6Isg6BfIs00"
+      stripeLink: "https://buy.stripe.com/test_6oUaEWftO6A2gj2dYt"
     },
     {
       id: 2,
@@ -29,7 +29,7 @@ const Shop: React.FC = () => {
       price: "4 890 Ft",
       image: "/assets/shop/eskuvoi_tervezo_01.jpg",
       description: "Teljes körű digitális szervezőfüzet.",
-      stripeLink: ""
+      stripeLink: "https://buy.stripe.com/test_dRm7sK4Pa3nQ6Isg6B"
     }
   ];
 
