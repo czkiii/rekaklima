@@ -12,6 +12,8 @@ interface PortfolioItem {
 const Portfolio: React.FC = () => {
   const [selectedGallery, setSelectedGallery] = useState<string[] | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   // Prevent body scroll when gallery is open
   useEffect(() => {
@@ -26,6 +28,27 @@ const Portfolio: React.FC = () => {
       document.body.style.overflow = '';
     };
   }, [selectedGallery]);
+
+  // Handle touch swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 75) {
+      // Swiped left
+      nextImage();
+    }
+
+    if (touchStart - touchEnd < -75) {
+      // Swiped right
+      prevImage();
+    }
+  };
 
   const items: PortfolioItem[] = [
     { 
@@ -209,6 +232,9 @@ const Portfolio: React.FC = () => {
                 const mid = rect.width / 2;
                 x < mid ? prevImage() : nextImage();
               }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               style={{ 
                 animation: 'zoomIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
               }}
@@ -218,13 +244,17 @@ const Portfolio: React.FC = () => {
           {/* Thumbnail Strip */}
           <div 
             className="px-4 md:px-8 pb-6 pt-4 bg-gradient-to-t from-black/60 via-black/40 to-transparent backdrop-blur-md"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
               <div className="flex gap-3 mx-auto">
                 {selectedGallery.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setCurrentImageIndex(idx)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIndex(idx);
+                    }}
                     className={`group relative flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden transition-all duration-300 ${
                       idx === currentImageIndex 
                         ? 'ring-2 ring-[#C87941] ring-offset-2 ring-offset-[#3A322E] scale-110 shadow-lg' 
