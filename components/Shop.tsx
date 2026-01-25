@@ -120,7 +120,7 @@ Egyszerűen vásárolj, töltsd le, nyomtasd ki és készítsd el saját személ
             <div className="relative">
               <button
                 onClick={() => setSelectedProduct(null)}
-                className="sticky top-6 right-6 md:top-8 md:right-8 float-right w-12 h-12 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-[#4A403A] hover:bg-[#C87941] hover:text-white transition-all shadow-lg z-10 mr-6 mt-6 md:mr-8 md:mt-8"
+                className="absolute top-6 right-6 md:top-8 md:right-8 w-12 h-12 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-[#4A403A] hover:bg-[#C87941] hover:text-white transition-all shadow-lg z-10"
               >
                 ✕
               </button>

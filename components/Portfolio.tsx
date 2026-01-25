@@ -177,10 +177,11 @@ const Portfolio: React.FC = () => {
       {selectedGallery && (
         <div 
           className="fixed inset-0 bg-gradient-to-br from-[#4A403A] via-[#3A322E] to-black z-50 flex flex-col animate-fadeIn overflow-y-auto"
+          onClick={closeGallery}
         >
           {/* Header Bar - Sticky */}
           <div 
-            className="sticky top-0 z-10 flex items-center justify-between px-4 md:px-8 py-6 bg-gradient-to-b from-black/60 to-transparent backdrop-blur-md"
+            className="sticky top-0 z-10 flex items-center justify-center px-4 md:px-8 py-6 bg-gradient-to-b from-black/60 to-transparent backdrop-blur-md"
           >
             <div className="flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-[#C87941] animate-pulse"></div>
@@ -188,15 +189,6 @@ const Portfolio: React.FC = () => {
                 {currentImageIndex + 1} <span className="text-white/40">/</span> {selectedGallery.length}
               </span>
             </div>
-            
-            <button
-              onClick={closeGallery}
-              className="group relative w-11 h-11 rounded-2xl bg-white/5 border border-white/10 hover:bg-[#C87941] hover:border-[#C87941] backdrop-blur-md flex items-center justify-center transition-all duration-300 hover:rotate-90 z-20"
-            >
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
 
           {/* Main Image Area */}
