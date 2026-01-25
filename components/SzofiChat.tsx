@@ -21,13 +21,17 @@ const SzofiChat: React.FC = () => {
   const [fallbackText, setFallbackText] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const triggerShake = () => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
+  };
+
   // Random shake effect
   useEffect(() => {
     const randomShake = () => {
       const random = Math.random();
       if (random < 0.15) {
-        setIsShaking(true);
-        setTimeout(() => setIsShaking(false), 500);
+        triggerShake();
       }
     };
 
@@ -174,27 +178,27 @@ const SzofiChat: React.FC = () => {
       <div className="fixed bottom-6 right-6 z-50">
         {/* Fallback Modal */}
         {fallbackMode && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
-            <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-w-[calc(100vw-32px)]">
-              <h3 className="text-lg font-semibold text-[#4A403A] mb-4">📧 Email kliens nem nyílt meg?</h3>
-              <p className="text-sm text-[#5A5A5A] mb-6">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-xl shadow-2xl p-4 md:p-6 w-80 md:w-96 max-w-full max-h-[80vh] overflow-y-auto">
+              <h3 className="text-base md:text-lg font-semibold text-[#4A403A] mb-3 md:mb-4">📧 Email kliens nem nyílt meg?</h3>
+              <p className="text-xs md:text-sm text-[#5A5A5A] mb-4 md:mb-6">
                 Nincs gond! Másolhatod a szöveget a vágólapra, és manuálisan beillesztheted az emailbe.
               </p>
-              <div className="bg-[#F5E1D2]/30 rounded-lg p-3 max-h-[200px] overflow-y-auto mb-6">
-                <p className="text-xs text-[#4A403A] whitespace-pre-wrap font-mono break-words">
+              <div className="bg-[#F5E1D2]/30 rounded-lg p-2 md:p-3 max-h-[180px] md:max-h-[200px] overflow-y-auto mb-4 md:mb-6">
+                <p className="text-[11px] md:text-xs text-[#4A403A] whitespace-pre-wrap font-mono break-words">
                   {fallbackText}
                 </p>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setFallbackMode(false)}
-                  className="flex-1 px-4 py-2 bg-[#E0D5CC] text-[#4A403A] rounded-lg font-medium hover:bg-[#D0CBBC] transition-colors"
+                  className="flex-1 px-3 py-2 bg-[#E0D5CC] text-[#4A403A] rounded-lg font-medium hover:bg-[#D0CBBC] transition-colors text-sm"
                 >
                   Mégsem
                 </button>
                 <button
                   onClick={handleCopyToClipboard}
-                  className="flex-1 px-4 py-2 bg-[#C87941] text-white rounded-lg font-medium hover:bg-[#B86A2E] transition-colors"
+                  className="flex-1 px-3 py-2 bg-[#C87941] text-white rounded-lg font-medium hover:bg-[#B86A2E] transition-colors text-sm"
                 >
                   📋 Másolás
                 </button>
@@ -204,10 +208,13 @@ const SzofiChat: React.FC = () => {
         )}
         {/* Chat ablak */}
         {isOpen && (
-          <div className="bg-white rounded-xl shadow-xl w-80 max-w-[calc(100vw-32px)] mb-4 flex flex-col" style={{ height: '500px' }}>
+          <div
+            className="bg-white rounded-xl shadow-xl w-72 md:w-80 max-w-[calc(100vw-24px)] md:max-w-[calc(100vw-32px)] mb-4 flex flex-col"
+            style={{ height: 'min(65vh, 520px)', maxHeight: '80vh', minHeight: '360px' }}
+          >
             {/* Fejléc */}
-            <div className="flex items-center justify-between p-4 border-b border-[#E0D5CC]">
-              <h3 className="text-lg font-semibold text-[#4A403A]">Szofi 🦊</h3>
+            <div className="flex items-center justify-between p-3 md:p-4 border-b border-[#E0D5CC]">
+              <h3 className="text-base md:text-lg font-semibold text-[#4A403A]">Szofi 🦊</h3>
               <button
                 onClick={() => setIsOpen(false)}
                 className="text-[#8C827D] hover:text-[#4A403A] text-xl"
@@ -219,7 +226,7 @@ const SzofiChat: React.FC = () => {
             {/* Chat log */}
             {!showSendForm ? (
               <>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3">
                   {chatLog.length === 0 ? (
                     <p className="text-sm text-[#8C827D] italic">Szofi vár a kérdéseidre...</p>
                   ) : (
@@ -228,7 +235,7 @@ const SzofiChat: React.FC = () => {
                         <div key={idx}>
                           {msg.type === 'user' ? (
                             <div className="text-right">
-                              <div className="inline-block bg-[#C87941] text-white px-3 py-2 rounded-lg max-w-xs text-sm break-words">
+                              <div className="inline-block bg-[#C87941] text-white px-3 py-2 rounded-lg max-w-[70vw] md:max-w-xs text-sm break-words">
                                 {msg.text}
                               </div>
                             </div>
@@ -239,7 +246,7 @@ const SzofiChat: React.FC = () => {
                                   {msg.title}
                                 </div>
                               )}
-                              <div className="inline-block bg-[#F5E1D2] text-[#4A403A] px-3 py-2 rounded-lg max-w-xs text-sm break-words">
+                              <div className="inline-block bg-[#F5E1D2] text-[#4A403A] px-3 py-2 rounded-lg max-w-[70vw] md:max-w-xs text-sm break-words">
                                 🦊 {msg.text}
                               </div>
                               {msg.followUp && msg.followUp.length > 0 && (
@@ -257,7 +264,7 @@ const SzofiChat: React.FC = () => {
                 </div>
 
                 {/* Input */}
-                <div className="border-t border-[#E0D5CC] p-4 space-y-2">
+                <div className="border-t border-[#E0D5CC] p-3 md:p-4 space-y-2">
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -296,7 +303,7 @@ const SzofiChat: React.FC = () => {
               </>
             ) : (
               /* Send Form */
-              <div className="flex-1 flex flex-col p-4 space-y-4">
+              <div className="flex-1 flex flex-col p-3 md:p-4 space-y-4">
                 <div>
                   <label className="text-sm font-medium text-[#4A403A] block mb-2">
                     Neved *
@@ -345,7 +352,10 @@ const SzofiChat: React.FC = () => {
 
         {/* Róka ikon gomb */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {
+            triggerShake();
+            setIsOpen(prev => !prev);
+          }}
           className={`w-16 h-16 rounded-full text-4xl shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center relative ${
             isShaking ? 'szofi-shake' : ''
           }`}

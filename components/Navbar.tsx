@@ -13,10 +13,10 @@ const Navbar: React.FC = () => {
   }, []);
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'py-2 glass border-b border-[#F5E1D2]/30 shadow-sm' : 'py-6 bg-transparent'}`}>
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'py-0 md:py-0 glass border-b border-[#F5E1D2]/30 shadow-sm' : 'py-0 md:py-1 bg-transparent'}`}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between h-16 md:h-24 overflow-hidden">
         
-        <a href="#" className="flex items-center gap-2 group transition-transform hover:scale-105 duration-300">
+        <a href="#" className="flex items-center gap-2 group transition-transform hover:scale-105 duration-300 -my-4 md:-my-6">
           <Logo className="h-[138px] md:h-56 w-auto transition-all duration-500" />
         </a>
 
