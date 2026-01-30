@@ -5,6 +5,13 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    emptyOutDir: true
+    emptyOutDir: true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Console.log-ok eltávolítása production-ben
+        drop_debugger: true,
+      },
+    },
   }
 });

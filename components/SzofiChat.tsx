@@ -90,9 +90,19 @@ const SzofiChat: React.FC = () => {
     setLoading(false);
   };
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSendToReka = async () => {
     if (!senderName.trim() || !senderEmail.trim()) {
       alert('Kérjük add meg a neved és az email címed!');
+      return;
+    }
+
+    if (!validateEmail(senderEmail.trim())) {
+      alert('❌ Kérlek adj meg egy érvényes email címet!');
       return;
     }
 

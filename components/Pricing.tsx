@@ -22,6 +22,12 @@ const Pricing: React.FC = () => {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      alert('❌ Kérlek adj meg egy érvényes email címet!');
+      return;
+    }
+
     setSending(true);
 
     try {

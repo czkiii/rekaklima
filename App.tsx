@@ -1,5 +1,6 @@
 
 import React from 'react';
+import ErrorBoundary from './components/ErrorBoundary.tsx';
 import Navbar from './components/Navbar.tsx';
 import Hero from './components/Hero.tsx';
 import About from './components/About.tsx';
@@ -13,20 +14,22 @@ import SzofiChat from './components/SzofiChat.tsx';
 
 const App: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#FDF9F6] text-[#2D2D2D] overflow-x-hidden relative">
-      <ScrollingLeaf />
-      <Navbar />
-      <main>
-        <Hero />
-        <About />
-        <Portfolio />
-        <Shop />
-        <Pricing />
-        <Clients />
-      </main>
-      <Footer />
-      <SzofiChat />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-[#FDF9F6] text-[#2D2D2D] overflow-x-hidden relative">
+        <ScrollingLeaf />
+        <Navbar />
+        <main>
+          <Hero />
+          <About />
+          <Portfolio />
+          <Shop />
+          <Pricing />
+          <Clients />
+        </main>
+        <Footer />
+        <SzofiChat />
+      </div>
+    </ErrorBoundary>
   );
 };
 
