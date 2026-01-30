@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { useDraggable } from './useDraggable';
 
 interface ChatMessage {
   type: 'user' | 'szofi';
@@ -17,12 +19,20 @@ const SzofiChat: React.FC = () => {
   const [senderName, setSenderName] = useState('');
   const [senderEmail, setSenderEmail] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  const { position, isDragging, hasMoved, isMobile, handleDragStart, resetToDefault } = useDraggable();
 
   const triggerShake = () => {
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), 500);
   };
+
+  // Ensure component is mounted (for Portal)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Random shake effect
   useEffect(() => {
@@ -36,6 +46,13 @@ const SzofiChat: React.FC = () => {
     const interval = setInterval(randomShake, 4000 + Math.random() * 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Reset position when chat opens (only mobile)
+  useEffect(() => {
+    if (isOpen && isMobile && typeof window !== 'undefined') {
+      resetToDefault();
+    }
+  }, [isOpen, isMobile]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -145,7 +162,9 @@ const SzofiChat: React.FC = () => {
     }
   };
 
-  return (
+  if (!mounted || typeof window === 'undefined') return null;
+
+  const chatContent = (
     <>
       <style>{`
         @keyframes shake {
@@ -166,12 +185,27 @@ const SzofiChat: React.FC = () => {
         }
       `}</style>
 
-      <div className="fixed bottom-6 right-6 z-50">
+      <div 
+        className="fixed z-[9999]"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          transition: isDragging ? 'none' : 'left 0.3s ease, top 0.3s ease',
+          cursor: isMobile ? (isDragging ? 'grabbing' : 'grab') : 'pointer'
+        }}
+      >
         {/* Chat ablak */}
         {isOpen && (
           <div
-            className="bg-white rounded-xl shadow-xl w-72 md:w-80 max-w-[calc(100vw-24px)] md:max-w-[calc(100vw-32px)] mb-4 flex flex-col"
-            style={{ height: 'min(65vh, 520px)', maxHeight: '80vh', minHeight: '360px' }}
+            className="bg-white rounded-xl shadow-xl w-72 md:w-80 max-w-[calc(100vw-24px)] md:max-w-[calc(100vw-32px)] mb-4 flex flex-col absolute"
+            style={{ 
+              height: 'min(65vh, 520px)', 
+              maxHeight: '80vh', 
+              minHeight: '360px',
+              bottom: '80px',
+              right: position.x > (typeof window !== 'undefined' ? window.innerWidth / 2 : 500) ? '0' : 'auto',
+              left: position.x <= (typeof window !== 'undefined' ? window.innerWidth / 2 : 500) ? '0' : 'auto'
+            }}
           >
             {/* Fejléc */}
             <div className="flex items-center justify-between p-3 md:p-4 border-b border-[#E0D5CC]">
@@ -313,25 +347,36 @@ const SzofiChat: React.FC = () => {
 
         {/* Róka ikon gomb */}
         <button
-          onClick={() => {
+          onMouseDown={isMobile ? handleDragStart : undefined}
+          onTouchStart={isMobile ? handleDragStart : undefined}
+          onClick={(e) => {
+            if (hasMoved && isMobile) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
             triggerShake();
             setIsOpen(prev => !prev);
           }}
           className={`w-16 h-16 rounded-full text-4xl shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center relative ${
             isShaking ? 'szofi-shake' : ''
-          }`}
+          } ${isDragging ? 'scale-110' : ''}`}
           style={{
             background: 'rgba(200, 121, 65, 0.3)',
             backdropFilter: 'blur(8px)',
-            border: '2px solid rgba(200, 121, 65, 0.2)'
+            border: '2px solid rgba(200, 121, 65, 0.2)',
+            touchAction: isMobile ? 'none' : 'auto',
+            userSelect: 'none'
           }}
-          title="Nyiss meg Szofival"
+          title={isMobile ? "Húzd bárhová vagy nyisd meg Szofival" : "Nyiss meg Szofival"}
         >
           <span className="text-4xl">🦊</span>
         </button>
       </div>
     </>
   );
+
+  return ReactDOM.createPortal(chatContent, document.body);
 };
 
 export default SzofiChat;

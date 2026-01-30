@@ -24,11 +24,30 @@ const Navbar: React.FC = () => {
     };
   }, [isOpen]);
 
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    e.preventDefault();
+    if (sectionId === '#') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.history.pushState(null, '', window.location.pathname);
+    } else {
+      const element = document.querySelector(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.pushState(null, '', sectionId);
+      }
+    }
+    setIsOpen(false);
+  };
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled && !isOpen ? 'py-0 md:py-0 glass border-b border-[#F5E1D2]/30 shadow-sm' : 'py-0 md:py-1 bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between h-16 md:h-24 overflow-visible">
         
-        <a href="#" className="flex items-center gap-2 group transition-transform hover:scale-105 duration-300 -my-4 md:-my-6 relative z-[110]">
+        <a 
+          href="#" 
+          onClick={(e) => scrollToSection(e, '#')}
+          className="flex items-center gap-2 group transition-transform hover:scale-105 duration-300 -my-4 md:-my-6 relative z-[110]"
+        >
           <Logo className="h-[138px] md:h-56 w-auto transition-all duration-500" />
         </a>
 
@@ -41,7 +60,8 @@ const Navbar: React.FC = () => {
           ].map((item) => (
             <a 
               key={item.n}
-              href={item.h} 
+              href={item.h}
+              onClick={(e) => scrollToSection(e, item.h)}
               className="text-[12px] uppercase tracking-[0.25em] font-extrabold text-[#4A403A] hover:text-[#C87941] transition-all relative group"
             >
               {item.n}
@@ -59,14 +79,19 @@ const Navbar: React.FC = () => {
 
       {isOpen && (
         <div className="fixed inset-0 bg-[#F9F5F1]/98 backdrop-blur-md z-[105] flex flex-col items-center justify-center gap-10 transition-all duration-500 md:hidden">
-          {['Portfólió', 'Shop', 'Árak', 'Kapcsolat'].map((item) => (
+          {[
+            { n: 'Portfólió', h: '#portfolio' },
+            { n: 'Shop', h: '#shop' },
+            { n: 'Árak', h: '#arak' },
+            { n: 'Kapcsolat', h: '#kapcsolat' }
+          ].map((item) => (
             <a 
-              key={item}
-              href={`#${item.toLowerCase().replace('ó', 'o').replace('á', 'a')}`} 
-              onClick={() => setIsOpen(false)}
+              key={item.n}
+              href={item.h}
+              onClick={(e) => scrollToSection(e, item.h)}
               className="text-3xl serif font-bold text-[#4A403A] hover:text-[#C87941] transition-colors"
             >
-              {item}
+              {item.n}
             </a>
           ))}
         </div>
