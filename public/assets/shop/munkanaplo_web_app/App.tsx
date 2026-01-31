@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
 import { 
-  Calendar, Briefcase, Settings as SettingsIcon, Plus, ChevronLeft, ChevronRight,
-  Trash2, Clock, LayoutGrid, FileSpreadsheet, 
+  Calendar, Briefcase, Settings as SettingsIcon, Plus, ChevronLeft, ChevronRight, ChevronDown,
+  Trash2, Clock, LayoutGrid, FileSpreadsheet, FileText,
   Play, Square, AlertCircle, LogOut, User as UserIcon, 
   CalendarCheck2, ShieldCheck, Globe, Mail, Lock, UserPlus, Info, Sun, Moon, Download
 } from 'lucide-react';
@@ -204,7 +204,8 @@ const Navbar = () => {
   const location = useLocation();
   const items = [
     { path: '/', icon: Calendar, label: 'Idővonal' },
-    { path: '/jobs', icon: Briefcase, label: 'Projektek' },
+    { path: '/jobs', icon: Briefcase, label: 'Ügyfelek' },
+    { path: '/notes', icon: FileText, label: 'Napló' },
     { path: '/history', icon: LayoutGrid, label: 'Elemzés' },
     { path: '/settings', icon: SettingsIcon, label: 'Fiók' },
   ];
@@ -285,14 +286,31 @@ const WeeklyView = ({ jobs, entries, settings, user, refresh }: any) => {
     if (!settings.activeSession) return;
     const job = jobs.find((j: any) => j.id === settings.activeSession!.jobId);
     if (!job) return;
+    
+    const projectName = prompt('📋 Mit csináltál?\n(Projekt neve - pl. Logo tervezés, Weboldal készítés)');
+    if (projectName === null) return; // Cancel - ne mentse
+    
+    const notes = prompt('📝 Részletes jegyzet?\n(Opcionális - pl. konkrét feladatok, megjegyzések)');
+    
     const end = Date.now();
     const newEntry: TimeEntry = { 
       id: generateId(), jobId: job.id, ownerId: user.id, 
       startDateTime: new Date(settings.activeSession.startTime).toISOString(), 
       endDateTime: new Date(end).toISOString(), 
-      breakMinutes: 0, rateAtTime: job.hourlyRate, currencyAtTime: job.currency, createdAt: Date.now() 
+      breakMinutes: 0,
+      projectName: projectName || undefined, // Projekt neve
+      notes: notes || undefined, // Részletes leírás
+      rateAtTime: job.hourlyRate, currencyAtTime: job.currency, createdAt: Date.now() 
     };
     await db.saveEntry(newEntry);
+    await db.saveSettings({ ...settings, activeSession: undefined });
+    setElapsed(0);
+    refresh();
+  };
+
+  const cancelTimer = async () => {
+    if (!settings.activeSession) return;
+    if (!confirm('Biztosan elveted ezt a mérést? Az idő nem kerül mentésre.')) return;
     await db.saveSettings({ ...settings, activeSession: undefined });
     setElapsed(0);
     refresh();
@@ -324,7 +342,6 @@ const WeeklyView = ({ jobs, entries, settings, user, refresh }: any) => {
           {user.picture ? <img src={user.picture} className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700" alt="P" /> : <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">{user.name[0]}</div>}
           <div><h1 className="text-lg font-bold leading-tight text-slate-900 dark:text-white">Szia, {user.name.split(' ')[0]}!</h1><p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Web Dashboard</p></div>
         </div>
-        <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-xl text-slate-400 dark:text-slate-500"><Info size={18}/></div>
       </header>
 
       <Card className={`${settings.activeSession ? 'bg-slate-900 dark:bg-slate-950 border-none' : 'bg-white dark:bg-slate-800'} mb-6 !p-6 transition-all duration-300`}>
@@ -332,7 +349,10 @@ const WeeklyView = ({ jobs, entries, settings, user, refresh }: any) => {
           <div className="flex flex-col items-center gap-4">
             <div className="text-5xl font-mono font-bold text-white tracking-tighter">{new Date(elapsed * 1000).toISOString().substr(11, 8)}</div>
             <p className="text-slate-400 text-xs font-semibold">{jobs.find((j: any) => j.id === settings.activeSession?.jobId)?.name}</p>
-            <button onClick={stopTimer} className="w-full bg-red-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"><Square size={18} fill="currentColor" /> Megállítás</button>
+            <div className="w-full grid grid-cols-2 gap-3">
+              <button onClick={cancelTimer} className="bg-slate-700 dark:bg-slate-800 text-slate-300 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-600 dark:hover:bg-slate-700 transition-all"><Trash2 size={18} /> Elvetés</button>
+              <button onClick={stopTimer} className="bg-red-500 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"><Square size={18} fill="currentColor" /> Mentés</button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -377,7 +397,7 @@ const WeeklyView = ({ jobs, entries, settings, user, refresh }: any) => {
 
 // --- History/Analytics View ---
 
-const HistoryView = ({ jobs, entries, user }: any) => {
+const HistoryView = ({ jobs, entries, user, refresh }: any) => {
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -518,27 +538,63 @@ const HistoryView = ({ jobs, entries, user }: any) => {
       {/* Recent Entries */}
       <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 mt-8">Legutóbbi bejegyzések</h2>
       <div className="flex flex-col gap-2">
-        {monthEntries.slice(0, 10).map((entry: TimeEntry) => {
+        {[...monthEntries].reverse().slice(0, 10).map((entry: TimeEntry) => {
           const job = jobs.find((j: Job) => j.id === entry.jobId);
           if (!job) return null;
           const duration = calculateDuration(entry.startDateTime, entry.endDateTime, entry.breakMinutes);
           const earnings = duration / 60 * entry.rateAtTime;
           const date = new Date(entry.startDateTime);
           return (
-            <Card key={entry.id} className="!p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ backgroundColor: `${job.color}20`, color: job.color }}>
-                  {job.emoji}
+            <Card key={entry.id} className="!p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ backgroundColor: `${job.color}20`, color: job.color }}>
+                    {job.emoji}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{job.name}</p>
+                    {entry.projectName && (
+                      <p className="text-xs font-medium text-blue-600 dark:text-blue-400">📋 {entry.projectName}</p>
+                    )}
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{date.toLocaleDateString('hu-HU', { month: 'short', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">{job.title}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{date.toLocaleDateString('hu-HU', { month: 'short', day: 'numeric', weekday: 'short' })}</p>
+                <div className="flex items-center gap-2">
+                  <div className="text-right mr-2">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{formatMinutes(duration)}</p>
+                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(earnings, entry.currencyAtTime)}</p>
+                  </div>
+                  <button 
+                    onClick={async () => {
+                      const newProjectName = prompt('📋 Projekt neve:', entry.projectName || '');
+                      if (newProjectName === null) return;
+                      const newNotes = prompt('📝 Részletes jegyzet:', entry.notes || '');
+                      if (newNotes === null) return;
+                      await db.saveEntry({ ...entry, projectName: newProjectName || undefined, notes: newNotes || undefined });
+                      refresh();
+                    }}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 transition-all"
+                  >
+                    <SettingsIcon size={14} />
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      if (confirm('Biztosan törlöd ezt a bejegyzést?')) {
+                        await db.deleteEntry(entry.id);
+                        refresh();
+                      }
+                    }}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-bold text-slate-900 dark:text-white">{formatMinutes(duration)}</p>
-                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(earnings, entry.currencyAtTime)}</p>
-              </div>
+              {entry.notes && (
+                <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 italic">💭 {entry.notes}</p>
+                </div>
+              )}
             </Card>
           );
         })}
@@ -547,11 +603,153 @@ const HistoryView = ({ jobs, entries, user }: any) => {
   );
 };
 
+// --- Notes View ---
+
+const NotesView = ({ jobs, entries }: any) => {
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  
+  const jobsWithContent = jobs.filter((j: Job) => {
+    const hasProjectNotes = j.projectNotes && j.projectNotes.trim().length > 0;
+    const hasEntryNotes = entries.some((e: TimeEntry) => e.jobId === j.id && e.notes);
+    return hasProjectNotes || hasEntryNotes;
+  });
+
+  const getJobEntries = (jobId: string) => {
+    return entries
+      .filter((e: TimeEntry) => e.jobId === jobId && e.notes)
+      .sort((a: TimeEntry, b: TimeEntry) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime());
+  };
+
+  return (
+    <div className="animate-fade-in pb-20">
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Projekt Naplók</h1>
+      
+      {jobsWithContent.length === 0 ? (
+        <Card className="!p-8 text-center">
+          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FileText className="text-slate-400 dark:text-slate-500" size={24} />
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 font-medium mb-2">Még nincsenek projektnaplók</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">A Projektek menüben adj hozzá jegyzeteket!</p>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {jobsWithContent.map((job: Job) => {
+            const jobEntries = getJobEntries(job.id);
+            return (
+            <div key={job.id}>
+              <Card className="!p-0 overflow-hidden">
+                <button
+                  onClick={() => setExpandedJobId(expandedJobId === job.id ? null : job.id)}
+                  className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl" 
+                      style={{ backgroundColor: `${job.color}20`, color: job.color }}
+                    >
+                      {job.emoji}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 dark:text-white">{job.name || job.title}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        {job.projectNotes && (
+                          <span className="flex items-center gap-1">
+                            <FileText size={12} /> Projekt napló
+                          </span>
+                        )}
+                        {jobEntries.length > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} /> {jobEntries.length} munkamenet
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronDown 
+                    size={20} 
+                    className={`text-slate-400 dark:text-slate-500 transition-transform ${expandedJobId === job.id ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                
+                {expandedJobId === job.id && (
+                  <div className="px-4 pb-4 pt-2 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 animate-fade-in space-y-4">
+                    {job.projectNotes && (
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                          <FileText size={12} /> Projekt napló
+                        </h4>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                          {job.projectNotes}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {jobEntries.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                          <Clock size={12} /> Munkamenetek ({jobEntries.length})
+                        </h4>
+                        <div className="space-y-2">
+                          {jobEntries.map((entry: TimeEntry) => {
+                            const date = new Date(entry.startDateTime);
+                            const duration = calculateDuration(entry.startDateTime, entry.endDateTime, entry.breakMinutes);
+                            return (
+                              <div key={entry.id} className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                    {date.toLocaleDateString('hu-HU', { month: 'short', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                                    {formatMinutes(duration)}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-slate-700 dark:text-slate-300">
+                                  {entry.notes}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Card>
+            </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // --- Settings View ---
 
 const SettingsView = ({ settings, refresh, user, onLogout }: any) => {
+  const exportJSON = async () => {
+    const data = await db.getFullBackupData(user.id);
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `munkanaplo-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const deleteAccount = async () => {
+    if (!confirm('Biztosan törlöd a fiókodat? Minden adatod véglegesen törlődik!')) return;
+    await db.deleteUserAndAllData(user.id);
+    await db.saveSettings({ ...settings, currentUserId: undefined });
+    onLogout();
+  };
+
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in pb-20">
       <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Fiókbeállítások</h1>
       <Card className="flex items-center justify-between mb-6 !p-5">
         <div className="flex items-center gap-4">
@@ -562,12 +760,48 @@ const SettingsView = ({ settings, refresh, user, onLogout }: any) => {
       </Card>
 
       <section className="mb-6">
-        <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 mb-2">Adatkezelés</h3>
+        <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 mb-2">Adatok & Mentés</h3>
         <Card className="flex flex-col gap-2">
-           <button onClick={async () => exportToExcel(await db.getFullBackupData(user.id))} className="flex items-center gap-3 p-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all"><FileSpreadsheet size={18} className="text-emerald-500" /> Adatok exportálása (.xlsx)</button>
-           <button onClick={() => generateICS()} className="flex items-center gap-3 p-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all"><Calendar size={18} className="text-blue-500" /> Google Calendar emlékeztetők</button>
+           <button onClick={async () => exportToExcel(await db.getFullBackupData(user.id))} className="flex items-center gap-3 p-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all">
+             <FileSpreadsheet size={18} className="text-emerald-500" /> Excel exportálás (.xlsx)
+           </button>
+           <button onClick={exportJSON} className="flex items-center gap-3 p-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all">
+             <Download size={18} className="text-blue-500" /> Biztonsági mentés (JSON)
+           </button>
+           <button onClick={() => generateICS()} className="flex items-center gap-3 p-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all">
+             <Calendar size={18} className="text-purple-500" /> Naptár emlékeztetők
+           </button>
         </Card>
       </section>
+
+      <section className="mb-6">
+        <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 mb-2">Adatvédelem & GDPR</h3>
+        <Card className="flex flex-col gap-2">
+          <button onClick={() => setShowPrivacy(true)} className="flex items-center gap-3 p-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all">
+            <Info size={18} className="text-blue-500" /> Adatkezelési tájékoztató
+          </button>
+          <button onClick={deleteAccount} className="flex items-center gap-3 p-3 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all">
+            <Trash2 size={18} className="text-red-500" /> Fiók végleges törlése
+          </button>
+        </Card>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-3 ml-1">Az alkalmazás cookie-kat csak a működéshez használ, marketing célra nem.</p>
+      </section>
+
+      {showPrivacy && (
+        <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 max-w-lg w-full rounded-2xl p-6 shadow-xl relative">
+            <button onClick={() => setShowPrivacy(false)} className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">✕</button>
+            <h2 className="text-xl font-bold mb-4">Adatkezelési tájékoztató</h2>
+            <div className="text-sm text-slate-700 dark:text-slate-300 space-y-3 max-h-[60vh] overflow-y-auto">
+              <p><b>Munkanapló Pro</b> alkalmazás minden felhasználó adatait elkülönítve, biztonságosan kezeli. Az adatok kizárólag a saját fiókodhoz tartoznak, harmadik félnek nem kerülnek átadásra, kivéve ha Google bejelentkezést használsz (csak az azonosításhoz szükséges adatokat kapja meg a Google).</p>
+              <p>Az alkalmazás csak a működéshez szükséges cookie-kat használ, marketing vagy követési célból nem.</p>
+              <p>Bármikor letöltheted vagy törölheted az összes adatodat a Fiók menüben.</p>
+              <p>Az adatok törlése végleges, vissza nem állítható.</p>
+              <p>Az alkalmazás megfelel a GDPR előírásainak. További kérdés esetén fordulj az üzemeltetőhöz.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="p-6 bg-slate-900 dark:bg-slate-950 rounded-3xl text-white flex items-center justify-between shadow-xl">
         <div><p className="text-[10px] font-bold text-slate-500 dark:text-slate-600 uppercase tracking-widest mb-1">Rendszer</p><div className="flex items-center gap-2"><div className="w-2 h-2 bg-emerald-400 rounded-full"></div><span className="text-xs font-bold uppercase tracking-tight">Standard Web App</span></div></div>
@@ -579,14 +813,16 @@ const SettingsView = ({ settings, refresh, user, onLogout }: any) => {
 
 // --- Jobs View ---
 
-const JobsView = ({ jobs, user, refresh }: any) => {
+const JobsView = ({ jobs, entries, user, refresh }: any) => {
   const [showModal, setShowModal] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
-  const [name, setName] = useState('');
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [name, setName] = useState(''); // Ügyfél neve
   const [rate, setRate] = useState('');
   const [currency, setCurrency] = useState<'HUF' | 'EUR' | 'USD'>('HUF');
   const [emoji, setEmoji] = useState('💼');
   const [color, setColor] = useState('#3b82f6');
+  const [notes, setNotes] = useState('');
 
   const openModal = (job?: Job) => {
     if (job) {
@@ -596,6 +832,7 @@ const JobsView = ({ jobs, user, refresh }: any) => {
       setCurrency(job.currency);
       setEmoji(job.emoji || '💼');
       setColor(job.color || '#3b82f6');
+      setNotes(job.notes || '');
     } else {
       setEditingJob(null);
       setName('');
@@ -603,6 +840,7 @@ const JobsView = ({ jobs, user, refresh }: any) => {
       setCurrency('HUF');
       setEmoji('💼');
       setColor('#3b82f6');
+      setNotes('');
     }
     setShowModal(true);
   };
@@ -615,6 +853,7 @@ const JobsView = ({ jobs, user, refresh }: any) => {
     setCurrency('HUF');
     setEmoji('💼');
     setColor('#3b82f6');
+    setNotes('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -622,12 +861,13 @@ const JobsView = ({ jobs, user, refresh }: any) => {
     const jobData = {
       id: editingJob?.id || generateId(),
       ownerId: user.id,
-      name,
+      name, // Ügyfél neve
       title: name,
       hourlyRate: parseFloat(rate),
       currency,
       emoji,
       color,
+      notes,
       isActive: true,
       createdAt: editingJob?.createdAt || Date.now()
     };
@@ -639,70 +879,149 @@ const JobsView = ({ jobs, user, refresh }: any) => {
   const emojis = ['💼', '💻', '🎨', '📱', '🏗️', '📊', '✍️', '🎯', '⚙️', '🚀'];
   const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
+  // Projektek csoportosítása ügyfelenként
+  const getJobProjects = (jobId: string) => {
+    const jobEntries = entries.filter((e: TimeEntry) => e.jobId === jobId && e.projectName);
+    const projectsMap: Record<string, TimeEntry[]> = {};
+    jobEntries.forEach((entry: TimeEntry) => {
+      const pName = entry.projectName || 'Egyéb';
+      if (!projectsMap[pName]) projectsMap[pName] = [];
+      projectsMap[pName].push(entry);
+    });
+    return projectsMap;
+  };
+
   return (
-    <div className="animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Projektjeim</h1>
-        <button onClick={() => openModal()} className="w-10 h-10 bg-blue-600 dark:bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-          <Plus size={20} />
-        </button>
-      </div>
+    <>
+      <div className="animate-fade-in">
+        <div className="relative mb-6">
+          <button onClick={() => openModal()} className="absolute left-0 top-0 w-12 h-12 bg-blue-600 dark:bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20 hover:bg-blue-700 dark:hover:bg-blue-600 transition-all">
+            <Plus size={24} />
+          </button>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white text-center pt-2">Ügyfeleim</h1>
+        </div>
       
-      <div className="flex flex-col gap-2">
-        {jobs.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 dark:text-slate-500 font-bold">Nincs még hozzáadott projekt.</div>
-        ) : (
-          jobs.map((j: any) => (
-            <Card key={j.id} className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style={{ backgroundColor: `${j.color}20`, color: j.color }}>
-                  {j.emoji}
+        <div className="flex flex-col gap-3">
+          {jobs.length === 0 ? (
+            <div className="text-center py-12 text-slate-400 dark:text-slate-500 font-bold">Nincs még hozzáadott ügyfél.</div>
+          ) : (
+            jobs.map((j: Job) => {
+              const projects = getJobProjects(j.id);
+              const hasProjects = Object.keys(projects).length > 0;
+              return (
+                <div key={j.id}>
+                  <Card>
+                    <div className="flex justify-between items-center">
+                      <button 
+                        onClick={() => setExpandedJobId(expandedJobId === j.id ? null : j.id)}
+                        className="flex items-center gap-3 flex-1 text-left"
+                      >
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: `${j.color}20`, color: j.color }}>
+                          {j.emoji}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-slate-900 dark:text-white">{j.name || j.title}</h4>
+                          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{formatCurrency(j.hourlyRate, j.currency)}/óra</p>
+                        </div>
+                        {hasProjects && (
+                          <ChevronDown 
+                            size={18} 
+                            className={`text-slate-400 dark:text-slate-500 transition-transform ${expandedJobId === j.id ? 'rotate-180' : ''}`}
+                          />
+                        )}
+                      </button>
+                      <div className="flex items-center gap-2 ml-2">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); openModal(j); }} 
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all"
+                        >
+                          <SettingsIcon size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); confirm('Biztosan törlöd?') && db.deleteJob(j.id).then(refresh); }} 
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </Card>
+                  
+                  {expandedJobId === j.id && (
+                    <div className="mt-2 mb-1 mx-1 space-y-3 animate-fade-in">
+                      {j.notes && (
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                          <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Jegyzetek</h5>
+                          <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{j.notes}</p>
+                        </div>
+                      )}
+                      
+                      {hasProjects && (
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                          <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Projektek</h5>
+                          <div className="space-y-2">
+                            {Object.entries(projects).map(([projectName, projectEntries]) => {
+                              const totalMinutes = projectEntries.reduce((sum, e) => sum + calculateDuration(e.startDateTime, e.endDateTime, e.breakMinutes), 0);
+                              const totalEarnings = projectEntries.reduce((sum, e) => sum + (calculateDuration(e.startDateTime, e.endDateTime, e.breakMinutes) / 60 * e.rateAtTime), 0);
+                              return (
+                                <div key={projectName} className="bg-white dark:bg-slate-700/50 p-3 rounded-lg">
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <p className="font-bold text-sm text-slate-900 dark:text-white">📁 {projectName}</p>
+                                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                        {projectEntries.length} munkamenet • {formatMinutes(totalMinutes)}
+                                      </p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(totalEarnings, j.currency)}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white">{j.name || j.title}</h4>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{formatCurrency(j.hourlyRate, j.currency)}/óra</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => openModal(j)} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all">
-                  <SettingsIcon size={16} />
-                </button>
-                <button onClick={() => confirm('Biztosan törlöd?') && db.deleteJob(j.id).then(refresh)} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-all">
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </Card>
-          ))
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
-      
+
       {showModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-slate-900/95 dark:bg-black/95 backdrop-blur-lg" onClick={closeModal} />
-          <div className="relative z-10 w-full max-w-6xl bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-8 shadow-2xl animate-fade-in my-4 border border-slate-200 dark:border-slate-700">
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-all"
-            >
-              ✕
-            </button>
-            
-            <h2 className="text-xl font-bold mb-6 text-slate-900 dark:text-white">
-              {editingJob ? 'Projekt szerkesztése' : 'Új projekt hozzáadása'}
-            </h2>
-            
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-              {/* Emoji és Szín választók - nagyobb gapekkel */}
-              <div className="space-y-6">
+        <div className="fixed inset-0 z-[200] bg-white dark:bg-slate-900 overflow-y-auto animate-fade-in">
+          <div className="min-h-screen p-4 sm:p-6 md:p-8">
+            <div className="max-w-2xl mx-auto">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {editingJob ? 'Ügyfél szerkesztése' : 'Új ügyfél'}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  type="button"
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-4 pb-20">
+              {/* Emoji és Szín választók */}
+              <div className="space-y-3">
                 <div>
                   <label className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-3 block">Emoji</label>
-                  <div className="grid grid-cols-5 gap-3">
+                  <div className="grid grid-cols-5 gap-2">
                     {emojis.map(e => (
                       <button
                         key={e}
                         type="button"
                         onClick={() => setEmoji(e)}
-                        className={`h-16 rounded-xl flex items-center justify-center text-3xl transition-all ${emoji === e ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500 scale-110' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                        className={`aspect-square rounded-xl flex items-center justify-center text-2xl transition-all ${emoji === e ? 'bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500 scale-105' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                       >
                         {e}
                       </button>
@@ -712,13 +1031,13 @@ const JobsView = ({ jobs, user, refresh }: any) => {
                 
                 <div>
                   <label className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-3 block">Szín</label>
-                  <div className="grid grid-cols-8 gap-3">
+                  <div className="grid grid-cols-8 gap-2">
                     {colors.map(c => (
                       <button
                         key={c}
                         type="button"
                         onClick={() => setColor(c)}
-                        className={`h-12 rounded-xl transition-all ${color === c ? 'ring-2 ring-offset-2 ring-slate-400 dark:ring-slate-500 scale-110' : ''}`}
+                        className={`aspect-square rounded-xl transition-all ${color === c ? 'ring-2 ring-offset-2 dark:ring-offset-slate-900 ring-slate-400 dark:ring-slate-500 scale-105' : ''}`}
                         style={{ backgroundColor: c }}
                       />
                     ))}
@@ -727,35 +1046,35 @@ const JobsView = ({ jobs, user, refresh }: any) => {
               </div>
 
               <div>
-                <label className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-3 block">Projekt neve</label>
+                <label className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2 block">👤 Ügyfél neve</label>
                 <input
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="pl. Webfejlesztés"
-                  className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-4 rounded-xl font-bold text-base text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  placeholder="pl. Nagy Péter, Webstudio Kft"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl text-base text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-3 block">Óradíj</label>
+                  <label className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2 block">Óradíj</label>
                   <input
                     value={rate}
                     onChange={e => setRate(e.target.value)}
                     type="number"
                     step="0.01"
                     placeholder="5000"
-                    className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-4 rounded-xl font-bold text-base text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl text-base text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                     required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-3 block">Valuta</label>
+                  <label className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2 block">Valuta</label>
                   <select
                     value={currency}
                     onChange={e => setCurrency(e.target.value as 'HUF' | 'EUR' | 'USD')}
-                    className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-4 rounded-xl font-bold text-base text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl text-base text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                   >
                     <option value="HUF">HUF</option>
                     <option value="EUR">EUR</option>
@@ -764,17 +1083,31 @@ const JobsView = ({ jobs, user, refresh }: any) => {
                 </div>
               </div>
 
+              <div>
+                <label className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2 block">📝 Jegyzetek</label>
+                <textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="Jegyzetek az ügyfélről, fontos információk..."
+                  rows={6}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                />
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">A jegyzeteket később az ügyfél listában megtekintheted</p>
+              </div>
+
+              {/* Submit button */}
               <button
                 type="submit"
-                className="bg-blue-600 dark:bg-blue-500 text-white font-bold py-3 rounded-xl mt-2 hover:bg-blue-700 dark:hover:bg-blue-600 transition-all"
+                className="w-full bg-blue-600 dark:bg-blue-500 text-white font-bold py-4 rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all shadow-lg"
               >
-                {editingJob ? 'Mentés' : 'Létrehozás'}
+                {editingJob ? '💾 Mentés' : '✨ Létrehozás'}
               </button>
             </form>
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -876,8 +1209,9 @@ const AppContent = () => {
       
       <Routes>
         <Route path="/" element={<WeeklyView jobs={jobs} entries={entries} settings={settings} user={user} refresh={loadData} />} />
-        <Route path="/jobs" element={<JobsView jobs={jobs} user={user} refresh={loadData} />} />
-        <Route path="/history" element={<HistoryView jobs={jobs} entries={entries} user={user} />} />
+        <Route path="/jobs" element={<JobsView jobs={jobs} entries={entries} user={user} refresh={loadData} />} />
+        <Route path="/notes" element={<NotesView jobs={jobs} entries={entries} />} />
+        <Route path="/history" element={<HistoryView jobs={jobs} entries={entries} user={user} refresh={loadData} />} />
         <Route path="/settings" element={<SettingsView settings={settings} refresh={loadData} user={user} onLogout={() => setUser(null)} />} />
       </Routes>
       <Navbar />

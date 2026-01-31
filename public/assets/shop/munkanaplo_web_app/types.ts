@@ -15,12 +15,13 @@ export interface User {
 export interface Job {
   id: string;
   ownerId: string;
-  name: string;
+  name: string; // Ügyfél neve
   title?: string; // Backwards compatibility
   hourlyRate: number;
   currency: Currency;
   emoji?: string;
   color?: string;
+  notes?: string; // Jegyzetek az ügyfélről
   isActive: boolean;
   createdAt: number;
 }
@@ -32,7 +33,8 @@ export interface TimeEntry {
   startDateTime: string;
   endDateTime: string;
   breakMinutes: number;
-  notes?: string;
+  projectName?: string; // Projekt neve
+  notes?: string; // Részletes leírás
   rateAtTime: number;
   currencyAtTime: Currency;
   syncedToCalendar?: boolean;

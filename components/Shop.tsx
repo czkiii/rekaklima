@@ -100,7 +100,7 @@ Egyszerűen vásárolj, töltsd le, nyomtasd ki és készítsd el saját személ
       title: "Munkanapló Web App",
       category: "Web Alkalmazás",
       price: "Ingyenes",
-      image: "/assets/shop/munkanaplo_01.jpg",
+      image: "/assets/shop/munkanaplo_web_app/munkanaplo_01.jpg",
       description: "Professzionális munkaidő nyilvántartó alkalmazás böngészőben.",
       detailedDescription: `📱 Munkanapló Pro - Szakmai Munkaidő Nyilvántartó 📱
 
@@ -110,9 +110,9 @@ Ez egy teljes körű webes alkalmazás, amely segít megszervezni napi munkádat
 
 ✨ Próbáld ki ingyen 30 napig, aztán csak 1 200 Ft/hó!`,
       detailedImages: [
-        "/assets/shop/munkanaplo_01.jpg",
-        "/assets/shop/munkanaplo_01.jpg",
-        "/assets/shop/munkanaplo_01.jpg"
+        "/assets/shop/munkanaplo_web_app/munkanaplo_01.jpg",
+        "/assets/shop/munkanaplo_web_app/munkanaplo_01.jpg",
+        "/assets/shop/munkanaplo_web_app/munkanaplo_01.jpg"
       ],
       features: [
         "Munkák és projektek kezelése 💼",

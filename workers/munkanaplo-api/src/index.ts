@@ -37,7 +37,8 @@ export default {
     try {
       // /api/register - Regisztrációs email küldése
       if (url.pathname === '/api/register') {
-        const { email, name } = await request.json();
+        const body = await request.json() as { email: string; name: string };
+        const { email, name } = body;
         
         // Validáció
         if (!email || !name) {
@@ -137,7 +138,7 @@ export default {
           );
         }
 
-        const emailData = await emailResponse.json();
+        const emailData = await emailResponse.json() as { id: string };
         
         return new Response(
           JSON.stringify({ 
