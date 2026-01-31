@@ -410,22 +410,24 @@ const WeeklyView = ({ jobs, entries, settings, user, refresh }: any) => {
 // --- History/Analytics View ---
 
 const HistoryView = ({ jobs, entries, user, refresh }: any) => {
-      // --- Filter/Search state ---
-      const [filterText, setFilterText] = useState("");
+    // --- (Duplikált hónap state és monthEntries törölve, csak egy példány maradjon!) ---
 
-      // --- Filtered entries ---
-      const filteredMonthEntries = useMemo(() => {
-        if (!filterText.trim()) return monthEntries;
-        const lower = filterText.toLowerCase();
-        return monthEntries.filter(e => {
-          const job = jobs.find(j => j.id === e.jobId);
-          return (
-            (job?.name?.toLowerCase().includes(lower) ?? false) ||
-            (e.projectName?.toLowerCase().includes(lower) ?? false) ||
-            (e.notes?.toLowerCase().includes(lower) ?? false)
-          );
-        });
-      }, [filterText, monthEntries, jobs]);
+    // --- Filter/Search state ---
+    const [filterText, setFilterText] = useState("");
+
+    // --- Filtered entries ---
+    const filteredMonthEntries = useMemo(() => {
+      if (!filterText.trim()) return monthEntries;
+      const lower = filterText.toLowerCase();
+      return monthEntries.filter(e => {
+        const job = jobs.find(j => j.id === e.jobId);
+        return (
+          (job?.name?.toLowerCase().includes(lower) ?? false) ||
+          (e.projectName?.toLowerCase().includes(lower) ?? false) ||
+          (e.notes?.toLowerCase().includes(lower) ?? false)
+        );
+      });
+    }, [filterText, monthEntries, jobs]);
     // --- Hónap kiválasztó state (korábban lejjebb volt, de a trend grafikon miatt előre kell hozni) ---
     const [selectedMonth, setSelectedMonth] = useState(() => {
       const now = new Date();
