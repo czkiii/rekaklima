@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build:munkanaplo": "cd public/assets/shop/munkanaplo_web_app && npm install && npm run build",
-    "copy:munkanaplo": "powershell -Command \"if (Test-Path 'public/munkanaplo-web-app') { Remove-Item -Recurse -Force 'public/munkanaplo-web-app' }; Copy-Item -Recurse 'public/assets/shop/munkanaplo_web_app/dist' 'public/munkanaplo-web-app'\"",
+    "copy:munkanaplo": "rm -rf public/munkanaplo-web-app && cp -r public/assets/shop/munkanaplo_web_app/dist public/munkanaplo-web-app",
     "prebuild": "npm run build:munkanaplo && npm run copy:munkanaplo",
     "build": "vite build",
     "preview": "vite preview"
