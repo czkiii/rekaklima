@@ -1,5 +1,17 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 import { HashRouter, Routes, Route, Link, useLocation, useParams } from 'react-router-dom';
 import { 
   Calendar, Briefcase, Settings as SettingsIcon, Plus, ChevronLeft, ChevronRight, ChevronDown,
@@ -398,10 +410,64 @@ const WeeklyView = ({ jobs, entries, settings, user, refresh }: any) => {
 // --- History/Analytics View ---
 
 const HistoryView = ({ jobs, entries, user, refresh }: any) => {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  });
+    // --- Hónap kiválasztó state (korábban lejjebb volt, de a trend grafikon miatt előre kell hozni) ---
+    const [selectedMonth, setSelectedMonth] = useState(() => {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    });
+
+    // --- Trend grafikon adatok ---
+    const daysInMonth = useMemo(() => {
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const days = new Date(year, month, 0).getDate();
+      return Array.from({ length: days }, (_, i) => i + 1);
+    }, [selectedMonth]);
+
+    const dailyStats = useMemo(() => {
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const arr = daysInMonth.map(day => {
+        const dayEntries = entries.filter(e => {
+          const d = new Date(e.startDateTime);
+          return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
+        });
+        const minutes = dayEntries.reduce((sum, e) => sum + calculateDuration(e.startDateTime, e.endDateTime, e.breakMinutes), 0);
+        const earnings = dayEntries.reduce((sum, e) => sum + (calculateDuration(e.startDateTime, e.endDateTime, e.breakMinutes) / 60 * e.rateAtTime), 0);
+        return { day, minutes, earnings };
+      });
+      return arr;
+    }, [entries, daysInMonth, selectedMonth]);
+
+    const chartData = {
+      labels: daysInMonth.map(d => d.toString()),
+      datasets: [
+        {
+          label: 'Ledolgozott percek',
+          data: dailyStats.map(d => d.minutes),
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,0.1)',
+          yAxisID: 'y',
+        },
+        {
+          label: 'Bevétel (Ft)',
+          data: dailyStats.map(d => d.earnings),
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16,185,129,0.1)',
+          yAxisID: 'y1',
+        },
+      ],
+    };
+    const chartOptions = {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        title: { display: true, text: 'Havi trend' },
+      },
+      scales: {
+        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Perc' } },
+        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Ft' } },
+      },
+    };
+
 
   const monthEntries = useMemo(() => {
     const [year, month] = selectedMonth.split('-').map(Number);
@@ -448,8 +514,99 @@ const HistoryView = ({ jobs, entries, user, refresh }: any) => {
     return options;
   };
 
+  // --- Top ügyfelek/projektek ---
+  const topJobs = [...jobStats].sort((a, b) => b.earnings - a.earnings).slice(0, 3);
+  const topProjects = useMemo(() => {
+    const projectMap: Record<string, { earnings: number; minutes: number; count: number }> = {};
+    monthEntries.forEach(e => {
+      if (!e.projectName) return;
+      if (!projectMap[e.projectName]) projectMap[e.projectName] = { earnings: 0, minutes: 0, count: 0 };
+      const mins = calculateDuration(e.startDateTime, e.endDateTime, e.breakMinutes);
+      projectMap[e.projectName].minutes += mins;
+      projectMap[e.projectName].earnings += mins / 60 * e.rateAtTime;
+      projectMap[e.projectName].count++;
+    });
+    return Object.entries(projectMap).map(([name, data]) => ({ name, ...data })).sort((a, b) => b.earnings - a.earnings).slice(0, 3);
+  }, [monthEntries]);
+
+  // --- Átlagok, célkitűzés, extra statok ---
+  const avgRate = monthEntries.length ? (monthEntries.reduce((sum, e) => sum + e.rateAtTime, 0) / monthEntries.length) : 0;
+  const avgSession = monthEntries.length ? (monthEntries.reduce((sum, e) => sum + calculateDuration(e.startDateTime, e.endDateTime, e.breakMinutes), 0) / monthEntries.length) : 0;
+  const breakSum = monthEntries.reduce((sum, e) => sum + (e.breakMinutes || 0), 0);
+  const goalMinutes = 20 * 60 * 4; // pl. 4 hét, 20 óra/hét
+  const goalPercent = stats.totalMinutes / goalMinutes * 100;
+  const maxDay = dailyStats.reduce((max, d) => d.minutes > max.minutes ? d : max, { day: 0, minutes: 0, earnings: 0 });
+  const maxEarningDay = dailyStats.reduce((max, d) => d.earnings > max.earnings ? d : max, { day: 0, minutes: 0, earnings: 0 });
+
   return (
     <div className="animate-fade-in pb-8">
+      {/* Trend grafikon */}
+      <div className="mb-8 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border border-slate-200 dark:border-slate-700">
+        <Line data={chartData} options={chartOptions} height={120} />
+      </div>
+
+      {/* Top ügyfelek/projektek */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <Card className="!p-5">
+          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">Top ügyfelek</h3>
+          {topJobs.length === 0 ? <p className="text-slate-400">Nincs adat</p> : (
+            <ol className="space-y-1">
+              {topJobs.map((j, i) => (
+                <li key={j.job.id} className="flex items-center gap-2">
+                  <span className="font-bold text-lg" style={{ color: j.job.color }}>{i+1}.</span>
+                  <span className="font-bold">{j.job.name}</span>
+                  <span className="text-xs text-slate-500">{formatCurrency(j.earnings, j.job.currency)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Card>
+        <Card className="!p-5">
+          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">Top projektek</h3>
+          {topProjects.length === 0 ? <p className="text-slate-400">Nincs adat</p> : (
+            <ol className="space-y-1">
+              {topProjects.map((p, i) => (
+                <li key={p.name} className="flex items-center gap-2">
+                  <span className="font-bold text-lg text-blue-600 dark:text-blue-400">{i+1}.</span>
+                  <span className="font-bold">{p.name}</span>
+                  <span className="text-xs text-slate-500">{formatCurrency(p.earnings, 'HUF')}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Card>
+      </div>
+
+      {/* Átlagok, célkitűzés, extra statok */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <Card className="!p-5">
+          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">Átlagok</h3>
+          <p className="text-sm">Átlagos óradíj: <b>{formatCurrency(avgRate, 'HUF')}</b></p>
+          <p className="text-sm">Átlagos munkamenet: <b>{formatMinutes(avgSession)}</b></p>
+          <p className="text-sm">Szünetek összesen: <b>{formatMinutes(breakSum)}</b></p>
+        </Card>
+        <Card className="!p-5">
+          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">Célkitűzés</h3>
+          <p className="text-sm mb-2">Havi cél: <b>{formatMinutes(goalMinutes)}</b> ({goalPercent.toFixed(1)}%)</p>
+          <div className="w-full h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
+            <div className="h-full transition-all duration-500 rounded-full bg-blue-500" style={{ width: `${Math.min(goalPercent,100)}%` }} />
+          </div>
+          <p className="text-xs text-slate-500">{goalPercent >= 100 ? 'Gratulálok, teljesítetted a célt!' : 'Dolgozz tovább a célodért!'}</p>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <Card className="!p-5">
+          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">Legaktívabb nap</h3>
+          <p className="text-sm">{maxDay.day > 0 ? `${selectedMonth}.${String(maxDay.day).padStart(2,'0')}` : 'Nincs adat'}</p>
+          <p className="text-xs text-slate-500">Ledolgozott: <b>{formatMinutes(maxDay.minutes)}</b></p>
+        </Card>
+        <Card className="!p-5">
+          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-2">Legnagyobb bevételű nap</h3>
+          <p className="text-sm">{maxEarningDay.day > 0 ? `${selectedMonth}.${String(maxEarningDay.day).padStart(2,'0')}` : 'Nincs adat'}</p>
+          <p className="text-xs text-slate-500">Bevétel: <b>{formatCurrency(maxEarningDay.earnings, 'HUF')}</b></p>
+        </Card>
+      </div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Elemzés</h1>
         <select 
@@ -609,7 +766,7 @@ const NotesView = ({ jobs, entries }: any) => {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   
   const jobsWithContent = jobs.filter((j: Job) => {
-    const hasProjectNotes = j.projectNotes && j.projectNotes.trim().length > 0;
+    const hasProjectNotes = j.notes && j.notes.trim().length > 0;
     const hasEntryNotes = entries.some((e: TimeEntry) => e.jobId === j.id && e.notes);
     return hasProjectNotes || hasEntryNotes;
   });
@@ -653,7 +810,7 @@ const NotesView = ({ jobs, entries }: any) => {
                     <div>
                       <h3 className="font-bold text-slate-900 dark:text-white">{job.name || job.title}</h3>
                       <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                        {job.projectNotes && (
+                        {job.notes && (
                           <span className="flex items-center gap-1">
                             <FileText size={12} /> Projekt napló
                           </span>
@@ -674,13 +831,13 @@ const NotesView = ({ jobs, entries }: any) => {
                 
                 {expandedJobId === job.id && (
                   <div className="px-4 pb-4 pt-2 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 animate-fade-in space-y-4">
-                    {job.projectNotes && (
+                    {job.notes && (
                       <div>
                         <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1">
                           <FileText size={12} /> Projekt napló
                         </h4>
                         <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-                          {job.projectNotes}
+                          {job.notes}
                         </p>
                       </div>
                     )}
