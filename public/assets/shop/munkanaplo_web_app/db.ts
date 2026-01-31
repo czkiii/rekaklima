@@ -1,10 +1,45 @@
 
+
 import { Job, TimeEntry, Settings, User } from './types';
 
 const DB_NAME = 'WorkTrackerDB_v3'; // Verzió emelés a tiszta kezdéshez
 const DB_VERSION = 1;
 
 export class Database {
+    /**
+     * GDPR: Törli a user-t és minden hozzá tartozó adatot (jobs, entries, settings)
+     */
+    async deleteUserAndAllData(userId: string): Promise<void> {
+      // Töröld a user-t
+      await new Promise<void>((resolve, reject) => {
+        try {
+          const req = this.getStore('users', 'readwrite').delete(userId);
+          req.onsuccess = () => resolve();
+          req.onerror = (e: any) => reject(e.target.error);
+        } catch (err) { reject(err); }
+      });
+
+      // Töröld az összes job-ot
+      const jobs = await this.getJobs(userId);
+      for (const job of jobs) {
+        await this.deleteJob(job.id);
+      }
+
+      // Töröld az összes entry-t
+      const entries = await this.getEntries(userId);
+      for (const entry of entries) {
+        await this.deleteEntry(entry.id);
+      }
+
+      // Töröld a settings-et (ha van)
+      await new Promise<void>((resolve, reject) => {
+        try {
+          const req = this.getStore('settings', 'readwrite').delete('app_settings');
+          req.onsuccess = () => resolve();
+          req.onerror = (e: any) => reject(e.target.error);
+        } catch (err) { resolve(); }
+      });
+    }
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {

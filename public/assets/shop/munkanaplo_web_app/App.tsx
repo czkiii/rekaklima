@@ -410,7 +410,21 @@ const WeeklyView = ({ jobs, entries, settings, user, refresh }: any) => {
 // --- History/Analytics View ---
 
 const HistoryView = ({ jobs, entries, user, refresh }: any) => {
-    // --- (Duplikált hónap state és monthEntries törölve, csak egy példány maradjon!) ---
+
+    // --- Hónap kiválasztó state ---
+    const [selectedMonth, setSelectedMonth] = useState(() => {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    });
+
+    // --- Havi bejegyzések ---
+    const monthEntries = useMemo(() => {
+      const [year, month] = selectedMonth.split('-').map(Number);
+      return entries.filter((e: TimeEntry) => {
+        const date = new Date(e.startDateTime);
+        return date.getFullYear() === year && date.getMonth() === month - 1;
+      });
+    }, [entries, selectedMonth]);
 
     // --- Filter/Search state ---
     const [filterText, setFilterText] = useState("");
@@ -428,11 +442,6 @@ const HistoryView = ({ jobs, entries, user, refresh }: any) => {
         );
       });
     }, [filterText, monthEntries, jobs]);
-    // --- Hónap kiválasztó state (korábban lejjebb volt, de a trend grafikon miatt előre kell hozni) ---
-    const [selectedMonth, setSelectedMonth] = useState(() => {
-      const now = new Date();
-      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    });
 
     // --- Trend grafikon adatok ---
     const daysInMonth = useMemo(() => {
@@ -477,23 +486,16 @@ const HistoryView = ({ jobs, entries, user, refresh }: any) => {
     const chartOptions = {
       responsive: true,
       plugins: {
-        legend: { position: 'top' },
+        legend: { position: 'top' as const },
         title: { display: true, text: 'Havi trend' },
       },
       scales: {
-        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Perc' } },
-        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Ft' } },
+        y: { type: 'linear' as const, display: true, position: 'left' as const, title: { display: true, text: 'Perc' } },
+        y1: { type: 'linear' as const, display: true, position: 'right' as const, grid: { drawOnChartArea: false }, title: { display: true, text: 'Ft' } },
       },
     };
 
 
-  const monthEntries = useMemo(() => {
-    const [year, month] = selectedMonth.split('-').map(Number);
-    return entries.filter((e: TimeEntry) => {
-      const date = new Date(e.startDateTime);
-      return date.getFullYear() === year && date.getMonth() === month - 1;
-    });
-  }, [entries, selectedMonth]);
 
   const stats = useMemo(() => {
     const totalMinutes = monthEntries.reduce((sum: number, e: TimeEntry) => 
