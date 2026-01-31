@@ -410,6 +410,22 @@ const WeeklyView = ({ jobs, entries, settings, user, refresh }: any) => {
 // --- History/Analytics View ---
 
 const HistoryView = ({ jobs, entries, user, refresh }: any) => {
+      // --- Filter/Search state ---
+      const [filterText, setFilterText] = useState("");
+
+      // --- Filtered entries ---
+      const filteredMonthEntries = useMemo(() => {
+        if (!filterText.trim()) return monthEntries;
+        const lower = filterText.toLowerCase();
+        return monthEntries.filter(e => {
+          const job = jobs.find(j => j.id === e.jobId);
+          return (
+            (job?.name?.toLowerCase().includes(lower) ?? false) ||
+            (e.projectName?.toLowerCase().includes(lower) ?? false) ||
+            (e.notes?.toLowerCase().includes(lower) ?? false)
+          );
+        });
+      }, [filterText, monthEntries, jobs]);
     // --- Hónap kiválasztó state (korábban lejjebb volt, de a trend grafikon miatt előre kell hozni) ---
     const [selectedMonth, setSelectedMonth] = useState(() => {
       const now = new Date();
@@ -518,7 +534,7 @@ const HistoryView = ({ jobs, entries, user, refresh }: any) => {
   const topJobs = [...jobStats].sort((a, b) => b.earnings - a.earnings).slice(0, 3);
   const topProjects = useMemo(() => {
     const projectMap: Record<string, { earnings: number; minutes: number; count: number }> = {};
-    monthEntries.forEach(e => {
+    filteredMonthEntries.forEach(e => {
       if (!e.projectName) return;
       if (!projectMap[e.projectName]) projectMap[e.projectName] = { earnings: 0, minutes: 0, count: 0 };
       const mins = calculateDuration(e.startDateTime, e.endDateTime, e.breakMinutes);
@@ -527,12 +543,12 @@ const HistoryView = ({ jobs, entries, user, refresh }: any) => {
       projectMap[e.projectName].count++;
     });
     return Object.entries(projectMap).map(([name, data]) => ({ name, ...data })).sort((a, b) => b.earnings - a.earnings).slice(0, 3);
-  }, [monthEntries]);
+  }, [filteredMonthEntries]);
 
   // --- Átlagok, célkitűzés, extra statok ---
-  const avgRate = monthEntries.length ? (monthEntries.reduce((sum, e) => sum + e.rateAtTime, 0) / monthEntries.length) : 0;
-  const avgSession = monthEntries.length ? (monthEntries.reduce((sum, e) => sum + calculateDuration(e.startDateTime, e.endDateTime, e.breakMinutes), 0) / monthEntries.length) : 0;
-  const breakSum = monthEntries.reduce((sum, e) => sum + (e.breakMinutes || 0), 0);
+  const avgRate = filteredMonthEntries.length ? (filteredMonthEntries.reduce((sum, e) => sum + e.rateAtTime, 0) / filteredMonthEntries.length) : 0;
+  const avgSession = filteredMonthEntries.length ? (filteredMonthEntries.reduce((sum, e) => sum + calculateDuration(e.startDateTime, e.endDateTime, e.breakMinutes), 0) / filteredMonthEntries.length) : 0;
+  const breakSum = filteredMonthEntries.reduce((sum, e) => sum + (e.breakMinutes || 0), 0);
   const goalMinutes = 20 * 60 * 4; // pl. 4 hét, 20 óra/hét
   const goalPercent = stats.totalMinutes / goalMinutes * 100;
   const maxDay = dailyStats.reduce((max, d) => d.minutes > max.minutes ? d : max, { day: 0, minutes: 0, earnings: 0 });
@@ -540,6 +556,29 @@ const HistoryView = ({ jobs, entries, user, refresh }: any) => {
 
   return (
     <div className="animate-fade-in pb-8">
+      {/* Filter/Search bar */}
+      <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4">
+        <input
+          type="text"
+          className="w-full md:w-64 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Szűrés név, projekt, jegyzet alapján..."
+          value={filterText}
+          onChange={e => setFilterText(e.target.value)}
+        />
+      </div>
+      {/* PDF export button */}
+      <div className="flex justify-end mb-2">
+        <button
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold shadow hover:bg-blue-500 hover:text-white transition disabled:opacity-60"
+          disabled
+          title="PDF export hamarosan!"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v4.125A2.625 2.625 0 0 1 16.875 21H7.125A2.625 2.625 0 0 1 4.5 18.375V14.25m15 0-7.5 6-7.5-6m15 0V5.625A2.625 2.625 0 0 0 16.875 3H7.125A2.625 2.625 0 0 0 4.5 5.625V14.25" />
+          </svg>
+          PDF export
+        </button>
+      </div>
       {/* Trend grafikon */}
       <div className="mb-8 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow border border-slate-200 dark:border-slate-700">
         <Line data={chartData} options={chartOptions} height={120} />
