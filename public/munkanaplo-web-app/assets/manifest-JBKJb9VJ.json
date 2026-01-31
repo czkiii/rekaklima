@@ -1,0 +1,27 @@
+
+{
+  "short_name": "Munkanapló",
+  "name": "Munkanapló Pro - Munkaidő Nyilvántartó",
+  "icons": [
+    {
+      "src": "munkanaplo_01.jpg",
+      "type": "image/jpeg",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "munkanaplo_01.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/munkanaplo-web-app/index.html",
+  "background_color": "#0f172a",
+  "display": "standalone",
+  "scope": "/munkanaplo-web-app/",
+  "theme_color": "#2563eb",
+  "description": "Professzionális munkaidő nyilvántartó alkalmazás böngészőben.",
+  "orientation": "portrait",
+  "categories": ["productivity", "business"]
+}

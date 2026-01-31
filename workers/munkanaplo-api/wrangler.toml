@@ -1,0 +1,9 @@
+name = "munkanaplo-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-31"
+
+# Cloudflare Pages integration
+workers_dev = true
+
+[env.production]
+name = "munkanaplo-api"

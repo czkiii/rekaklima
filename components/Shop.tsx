@@ -13,7 +13,9 @@ interface Product {
   features?: string[];
   howItWorks?: string[];
   benefits?: string[];
-  stripeLink: string;
+  stripeLink?: string;
+  isWebApp?: boolean;
+  webAppUrl?: string;
 }
 
 const Shop: React.FC = () => {
@@ -92,10 +94,65 @@ Egyszerűen vásárolj, töltsd le, nyomtasd ki és készítsd el saját személ
         "Nyomtasd ki otthon, vagy mentsd el digitálisan 🖨️📱"
       ],
       stripeLink: "https://buy.stripe.com/test_dRm7sK4Pa3nQ6Isg6BfIs00"
+    },
+    {
+      id: 3,
+      title: "Munkanapló Web App",
+      category: "Web Alkalmazás",
+      price: "Ingyenes",
+      image: "/assets/shop/munkanaplo_01.jpg",
+      description: "Professzionális munkaidő nyilvántartó alkalmazás böngészőben.",
+      detailedDescription: `📱 Munkanapló Pro - Szakmai Munkaidő Nyilvántartó 📱
+
+Tökéletes megoldás szabadúszóknak, vállalkozóknak és projektmenedzsereknek, akik hatékonyan szeretnék nyomon követni munkaidejüket és projektjeiket.
+
+Ez egy teljes körű webes alkalmazás, amely segít megszervezni napi munkádat, nyomon követni projektjeidet és pontos időkimutatásokat készíteni. Használd böngészőből bárhonnan, bármikor - nincs szükség telepítésre!
+
+✨ Próbáld ki ingyen 30 napig, aztán csak 1 200 Ft/hó!`,
+      detailedImages: [
+        "/assets/shop/munkanaplo_01.jpg",
+        "/assets/shop/munkanaplo_01.jpg",
+        "/assets/shop/munkanaplo_01.jpg"
+      ],
+      features: [
+        "Munkák és projektek kezelése 💼",
+        "Időkövetés stopperórával ⏱️",
+        "Heti összesítések és statisztikák 📊",
+        "Excel exportálás (XLSX) 📑",
+        "Google Calendar integráció 📅",
+        "Sötét és világos mód 🌙☀️",
+        "Google OAuth bejelentkezés 🔐",
+        "Modern, mobilbarát design 📱",
+        "Böngésző alapú adattárolás (IndexedDB) 💾",
+        "Több eszközön használható 📱💻"
+      ],
+      howItWorks: [
+        "Kattints a 'Hamarosan' gombra - az alkalmazás készülőben",
+        "Jelentkezz be Google fiókkal vagy email címmel",
+        "Hozz létre munkákat és projekteket",
+        "Kövesd nyomon idődet a beépített stopperrel",
+        "Exportálj Excel riportokat vagy szinkronizálj Google Calendar-ral!"
+      ],
+      benefits: [
+        "Első 30 nap ingyenes próbaidőszak ✓",
+        "Utána csak 1 200 Ft/hó előfizetéssel ✓",
+        "Nincs telepítés, csak böngésző kell ✓",
+        "Biztonságos helyi adattárolás ✓",
+        "Google OAuth bejelentkezés ✓",
+        "Sötét mód a szemkímélésért ✓",
+        "Automatikus mentés ✓",
+        "Mobilon és asztali gépen egyaránt működik ✓"
+      ],
+      isWebApp: true,
+      webAppUrl: "/munkanaplo-web-app/index.html"
     }
   ];
 
   const handleCheckout = (product: Product) => {
+    if (product.isWebApp && product.webAppUrl) {
+      window.open(product.webAppUrl, '_blank');
+      return;
+    }
     if (!product.stripeLink) {
       alert('Ez a termék még nem elérhető a vásárláshoz.');
       return;
@@ -205,11 +262,13 @@ Egyszerűen vásárolj, töltsd le, nyomtasd ki és készítsd el saját személ
                 )}
 
                 {/* Notice */}
-                <div className="mb-8 p-4 bg-[#8BA888]/5 rounded-2xl border border-[#8BA888]/20">
-                  <p className="text-xs text-[#5A5A5A] leading-relaxed">
-                    <strong className="text-[#4A403A]">Fontos:</strong> Nincs fizikai termék szállítva. A színek kissé eltérhetnek a különböző monitorok miatt. Ez a vásárlás csak személyes használatra szolgál, nem kereskedelmi célra vagy újraértékesítésre.
-                  </p>
-                </div>
+                {!selectedProduct.isWebApp && (
+                  <div className="mb-8 p-4 bg-[#8BA888]/5 rounded-2xl border border-[#8BA888]/20">
+                    <p className="text-xs text-[#5A5A5A] leading-relaxed">
+                      <strong className="text-[#4A403A]">Fontos:</strong> Nincs fizikai termék szállítva. A színek kissé eltérhetnek a különböző monitorok miatt. Ez a vásárlás csak személyes használatra szolgál, nem kereskedelmi célra vagy újraértékesítésre.
+                    </p>
+                  </div>
+                )}
 
                 {/* Price & Buy Button */}
                 <div className="flex items-center justify-between gap-6 pt-6 border-t border-[#F5E1D2]">
@@ -221,7 +280,7 @@ Egyszerűen vásárolj, töltsd le, nyomtasd ki és készítsd el saját személ
                     onClick={() => handleCheckout(selectedProduct)}
                     className="px-8 md:px-12 py-4 md:py-5 rounded-[25px] bg-[#C87941] text-white font-bold text-xs md:text-sm uppercase tracking-[0.2em] transition-all hover:bg-[#B86A2E] active:scale-95 shadow-xl"
                   >
-                    Megvásárlás
+                    {selectedProduct.isWebApp ? 'Kipróbálom' : 'Megvásárlás'}
                   </button>
                 </div>
               </div>
@@ -274,7 +333,7 @@ Egyszerűen vásárolj, töltsd le, nyomtasd ki és készítsd el saját személ
                   onClick={() => handleCheckout(product)}
                   className="flex-1 py-5 rounded-[25px] bg-[#4A403A] text-white font-bold text-xs uppercase tracking-[0.2em] transition-all hover:bg-[#C87941] active:scale-95 shadow-lg shadow-gray-200"
                 >
-                  Megvásárlás
+                  {product.isWebApp ? 'Hamarosan' : 'Megvásárlás'}
                 </button>
               </div>
             </div>
